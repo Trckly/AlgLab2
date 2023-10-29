@@ -3,6 +3,9 @@
 
 #include "MainMenuWidget.h"
 
+#include "Kismet/KismetMathLibrary.h"
+#include "Tools/UEdMode.h"
+
 TArray<int> UMainMenuWidget::SelectionSort(TArray<int> Array)
 {
 	int MinIdx, N = Array.Num();
@@ -106,6 +109,19 @@ TArray<int> UMainMenuWidget::CountingSort(const TArray<int>& Array)
 	return OutputArray;
 }
 
+bool UMainMenuWidget::IsSorted(const TArray<int>& Array, const FString& SortMethod, const int& Size)
+{
+	for (int i = 1; i < Array.Num(); ++i)
+	{
+		if(Array[i] < Array[i-1])
+		{
+			ErrorTextBlock->SetText(FText::FromString(SortMethod + ", " + FString::FormatAsNumber(Size)));
+			return false;
+		}
+	}
+	return true;
+}
+
 int UMainMenuWidget::Partition(TArray<int>& Array, int Low, int High)
 {
 	int Pivot = Array[High];
@@ -180,7 +196,86 @@ void UMainMenuWidget::Merge(TArray<int>& Array, int const Left, int const Mid, i
 	delete[] RightArray;
 }
 
+void UMainMenuWidget::InitArrays()
+{
+	std::ofstream Fout;
+	Fout.open("/Users/bossofthisgym/Documents/Unreal Projects/AlgLab2/Logs/InitialArraysLog.txt", std::ios::trunc);
+	Fout << "1024 elements array:\n";
+	for(int i = 0; i < 1024; ++i)
+	{
+		Array6D_1.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
+		Fout << Array6D_1[i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n4096 elements array:\n";
+	for(int i = 0; i < 4096; ++i)
+	{
+		Array6D_2.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
+		Fout << Array6D_2[i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n16384 elements array:\n";
+	for(int i = 0; i < 16384; ++i)
+	{
+		Array6D_3.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
+		Fout << Array6D_3[i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n65536 elements array:\n";
+	for(int i = 0; i < 65536; ++i)
+	{
+		Array6D_4.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
+		Fout << Array6D_4[i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n262144 elements array:\n";
+	for(int i = 0; i < 262144; ++i)
+	{
+		Array6D_5.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
+		Fout << Array6D_5[i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n1048576 elements array:\n";
+	for(int i = 0; i < 1048576; ++i)
+	{
+		Array6D_6.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
+		Fout << Array6D_6[i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n4194304 elements array:\n";
+	for(int i = 0; i < 4194304; ++i)
+	{
+		Array6D_7.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
+		Fout << Array6D_7[i] << " ";
+	}
+	Fout << '\n';
+	Fout.close();
+}
+
 void UMainMenuWidget::ProcessLab6D()
 {
+	TArray<int> Result;
+	
+	ProcessingTextBlock->SetText(FText::FromString(TEXT("Initializing arrays and writing to the file...")));
+	InitArrays();
+	
+	FString EntryMessage = TEXT("Processing: ");
+	FString SortType = TEXT("Selection Sort");
+	ProcessingTextBlock->SetText(FText::FromString(EntryMessage + SortType));
+	
+	auto StartTime = std::chrono::high_resolution_clock::now();
+	Result = SelectionSort(Array6D_1);
+	auto StopTime = std::chrono::high_resolution_clock::now();
+	std::chrono::milliseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::milliseconds>(StopTime - StartTime);
+	IsSorted(Result, TEXT("Selection Sort"), Array6D_1.Num());
+
+	
+	
 	
 }
