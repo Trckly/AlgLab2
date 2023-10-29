@@ -3,9 +3,7 @@
 
 #include "MainMenuWidget.h"
 
-#include "Kismet/KismetMathLibrary.h"
-
-void UMainMenuWidget::SelectionSort(TArray<int>& Array)
+TArray<int> UMainMenuWidget::SelectionSort(TArray<int> Array)
 {
 	int MinIdx, N = Array.Num();
  
@@ -26,11 +24,13 @@ void UMainMenuWidget::SelectionSort(TArray<int>& Array)
 		if (MinIdx != i)
 			Swap(Array[MinIdx], Array[i]);
 	}
+	return Array;
 }
 
-void UMainMenuWidget::ShellSort(TArray<int>& Array)
+TArray<int> UMainMenuWidget::ShellSort(TArray<int> Array)
 {
 	int N = Array.Num();
+	
 	for (int Gap = N / 2; Gap > 0; Gap /= 2)
 	{
 		for (int i = Gap; i < N; ++i)
@@ -44,6 +44,7 @@ void UMainMenuWidget::ShellSort(TArray<int>& Array)
 			Array[j] = Temp;
 		}
 	}
+	return Array;
 }
 
 void UMainMenuWidget::QuickSort(TArray<int>& Array, int Low, int High)
@@ -69,45 +70,40 @@ void UMainMenuWidget::MergeSort(TArray<int>& Array, int Begin, int End)
 }
 
 
-void UMainMenuWidget::CountingSort(TArray<int>& Array)
+TArray<int> UMainMenuWidget::CountingSort(const TArray<int>& Array)
 {
 	const int N = Array.Num();
 
-	int Max = 0;
+	int Max = 0, Min = 0;
  
 	for (int i = 0; i < N; i++)
 	{
 		Max = FMath::Max(Max, Array[i]);
+		Min = FMath::Min(Min, Array[i]);
 	}
 	
 	// Initializing countArray[] with 0
 	TArray<int> CountArray;
-	CountArray.SetNumZeroed(Max + 1, false);
+	CountArray.SetNumZeroed(Max - Min + 1, false);
  
 	// Mapping each element of inputArray[] as an index
 	// of countArray[] array
 	for (int i = 0; i < N; i++)
-		CountArray[Array[i]]++;
-
-	FString LogCountArray = "Count array: ";
-	for (auto Value : CountArray)
-	{
-		LogCountArray += FString::Printf(TEXT("%i\t"), Value);
-	}
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *LogCountArray);
+		CountArray[Array[i] - Min]++;
 	
 	TArray<int> OutputArray;
+	OutputArray.SetNum(N, false);
 	
-	int c = 0;
-	for (int i = 0; i < CountArray.Num(); ++i)
+	int k = 0;
+
+	for (int j = Max; j >= Min; j--)
 	{
-		// Cycle to automatically write same values if they're more than one
-		// and check simultaneously
-		for (int j = 0; j < CountArray[i]; ++j)
+		for (int i = 0; i < CountArray[j - Min]; i++)
 		{
-			OutputArray.Push(i);
+			OutputArray[k++] = j;
 		}
 	}
+	return OutputArray;
 }
 
 int UMainMenuWidget::Partition(TArray<int>& Array, int Low, int High)
@@ -182,4 +178,9 @@ void UMainMenuWidget::Merge(TArray<int>& Array, int const Left, int const Mid, i
 	}
 	delete[] LeftArray;
 	delete[] RightArray;
+}
+
+void UMainMenuWidget::ProcessLab6D()
+{
+	
 }

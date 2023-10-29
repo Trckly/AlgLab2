@@ -26,15 +26,15 @@ public:
 	///
 	/// Sorting Functions
 	///
-	void SelectionSort(TArray<int>& Array);
+	TArray<int> SelectionSort(TArray<int> Array);
 
-	void ShellSort(TArray<int>& Array);
+	TArray<int> ShellSort(TArray<int> Array);
 
 	void QuickSort(TArray<int>& Array, int Low, int High);
 
 	void MergeSort(TArray<int>& Array, int Begin, int End);
 
-	void CountingSort(TArray<int>& Array);
+	TArray<int> CountingSort(const TArray<int>& Array);
 
 	///
 	/// Helping Functions
