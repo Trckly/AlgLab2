@@ -3,8 +3,26 @@
 
 #include "MainMenuWidget.h"
 
+#include "ParticleHelper.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Tools/UEdMode.h"
+
+void UMainMenuWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	Array6D.SetNum(7);
+
+	PushButton->OnClicked.AddDynamic(this, &UMainMenuWidget::PushToPriorityQueue);
+
+	AppendToButton->OnClicked.AddDynamic(this, &UMainMenuWidget::AppendToPriorityQueue);
+
+	ShowQueueButton->OnClicked.AddDynamic(this, &UMainMenuWidget::ShowQueue);
+
+	RememberButton->OnClicked.AddDynamic(this, &UMainMenuWidget::Remember);
+
+	DisableOutPanels();
+}
 
 TArray<int> UMainMenuWidget::SelectionSort(TArray<int> Array)
 {
@@ -12,8 +30,8 @@ TArray<int> UMainMenuWidget::SelectionSort(TArray<int> Array)
  
 	// One by one move boundary of
 	// unsorted subarray
-	for (int i = 0; i < N - 1; i++) {
- 
+	for (int i = 0; i < N - 1; i++)
+	{
 		// Find the minimum element in
 		// unsorted array
 		MinIdx = i;
@@ -99,7 +117,7 @@ TArray<int> UMainMenuWidget::CountingSort(const TArray<int>& Array)
 	
 	int k = 0;
 
-	for (int j = Max; j >= Min; j--)
+	for (int j = Min; j <= Max; ++j)
 	{
 		for (int i = 0; i < CountArray[j - Min]; i++)
 		{
@@ -203,79 +221,364 @@ void UMainMenuWidget::InitArrays()
 	Fout << "1024 elements array:\n";
 	for(int i = 0; i < 1024; ++i)
 	{
-		Array6D_1.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
-		Fout << Array6D_1[i] << " ";
+		Array6D[0].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6D[0][i] << " ";
 	}
 	Fout << '\n';
 
 	Fout << "\n4096 elements array:\n";
 	for(int i = 0; i < 4096; ++i)
 	{
-		Array6D_2.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
-		Fout << Array6D_2[i] << " ";
+		Array6D[1].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6D[1][i] << " ";
 	}
 	Fout << '\n';
 
 	Fout << "\n16384 elements array:\n";
 	for(int i = 0; i < 16384; ++i)
 	{
-		Array6D_3.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
-		Fout << Array6D_3[i] << " ";
+		Array6D[2].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6D[2][i] << " ";
 	}
 	Fout << '\n';
 
 	Fout << "\n65536 elements array:\n";
 	for(int i = 0; i < 65536; ++i)
 	{
-		Array6D_4.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
-		Fout << Array6D_4[i] << " ";
+		Array6D[3].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6D[3][i] << " ";
 	}
 	Fout << '\n';
 
 	Fout << "\n262144 elements array:\n";
 	for(int i = 0; i < 262144; ++i)
 	{
-		Array6D_5.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
-		Fout << Array6D_5[i] << " ";
+		Array6D[4].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6D[4][i] << " ";
 	}
 	Fout << '\n';
 
 	Fout << "\n1048576 elements array:\n";
 	for(int i = 0; i < 1048576; ++i)
 	{
-		Array6D_6.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
-		Fout << Array6D_6[i] << " ";
+		Array6D[5].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6D[5][i] << " ";
 	}
 	Fout << '\n';
 
 	Fout << "\n4194304 elements array:\n";
 	for(int i = 0; i < 4194304; ++i)
 	{
-		Array6D_7.Push(UKismetMathLibrary::RandomIntegerInRange(-1000000, 1000000));
-		Fout << Array6D_7[i] << " ";
+		Array6D[6].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6D[6][i] << " ";
 	}
 	Fout << '\n';
 	Fout.close();
 }
 
+TArray<char> UMainMenuWidget::GetEnteredChars(bool& Successful)
+{
+	FString InitialText = ValueLineEdit->GetText().ToString();
+	TArray<char> Result;
+	for (const TCHAR& Char : InitialText)
+	{
+		if (FChar::IsAlnum(Char) && !FChar::IsDigit(Char))
+		{
+			Result.Push(Char);
+		}
+	}
+	if(Result.Num() == 0)
+	{
+		ErrorText->SetText(FText::FromString(TEXT("Invalid values in value member!")));
+		Successful = false;
+	}
+	else
+	{
+		Successful = true;
+	}
+	return Result;
+}
+
+int UMainMenuWidget::GetEnteredPriority()
+{
+	return PriorityComboBox->GetSelectedIndex();
+}
+
+int UMainMenuWidget::Find(char Character)
+{
+	PriorityQueue TempQueue(Queue);
+	for(int i = 0; i < Queue.GetSize(); ++i)
+	{
+		if(TempQueue.Top() == Character)
+			return i;
+		TempQueue.Dequeue();
+	}
+	return -1;
+}
+
+char UMainMenuWidget::BeforeMin()
+{
+	int MinIndex = Find(Queue.GetMin());
+	PriorityQueue TempQueue(Queue);
+	for(int i = 0; i < MinIndex; ++i)
+	{
+		if(i == MinIndex-1)
+			return TempQueue.Top();
+		TempQueue.Dequeue();
+	}
+	return 0;
+}
+
+char UMainMenuWidget::AfterMax()
+{
+	int MaxIndex = Find(Queue.GetMax());
+	PriorityQueue TempQueue(Queue);
+	for(int i = 0; i < TempQueue.GetSize(); ++i)
+	{
+		if(i == MaxIndex+1)
+			return TempQueue.Top();
+		TempQueue.Dequeue();
+	}
+	return 0;
+}
+
+char UMainMenuWidget::GetThird()
+{
+	PriorityQueue TempQueue(Queue);
+	for (int i = 0; i < 3; ++i)
+	{
+		if(i == 2)
+			return TempQueue.Top();
+		TempQueue.Dequeue();
+	}
+	return 0;
+}
+
+char UMainMenuWidget::GetBeforeLast()
+{
+	PriorityQueue TempQueue(Queue);
+	for (int i = 0; i < TempQueue.GetSize(); ++i)
+	{
+		if(i == TempQueue.GetSize() - 2)
+			return TempQueue.Top();
+		TempQueue.Dequeue();
+	}
+	return 0;
+}
+
+void UMainMenuWidget::OutputQueue()
+{
+	if(Queue.GetSize() > 0)
+	{
+		FString QueueString;
+		int Size = Queue.GetSize();
+		PriorityQueue Temp = Queue;
+		for(int i = 0; i < Size; ++i)
+		{
+			int TopIndex = Temp.Top();
+			if(i != Size-1)
+				QueueString += FString::Printf(TEXT("%c(%s) -> "), Temp.ValueAt(TopIndex), *GetPriorityName(Temp.PriorityAt(TopIndex)));
+			else
+				QueueString += FString::Printf(TEXT("%c(%s)"), Temp.ValueAt(TopIndex), *GetPriorityName(Temp.PriorityAt(TopIndex)));
+			Temp.Dequeue();
+		}
+		MainOutputTextBlock->SetText(FText::FromString(QueueString));
+	}
+
+	if(RememberedQueue.GetSize() > 0)
+	{
+		FString RememberedQueueString;
+		PriorityQueue Temp = RememberedQueue;
+		int Size = Temp.GetSize();
+		for(int i = 0; i < Size; ++i)
+		{
+			int TopIndex = Temp.Top();
+			if(i != Size-1)
+				RememberedQueueString += FString::Printf(TEXT("%c(%s) -> "), Temp.ValueAt(TopIndex), *GetPriorityName(Temp.PriorityAt(TopIndex)));
+			else
+				RememberedQueueString += FString::Printf(TEXT("%c(%s)"), Temp.ValueAt(TopIndex), *GetPriorityName(Temp.PriorityAt(TopIndex)));
+			Temp.Dequeue();
+		}
+		RememberedTextBlock->SetText(FText::FromString(RememberedQueueString));
+	}
+
+	if(AppendedQueue.GetSize() > 0)
+	{
+		FString AppendedQueueString;
+		PriorityQueue Temp = AppendedQueue;
+		int Size = Temp.GetSize();
+		for(int i = 0; i < Size; ++i)
+		{
+			int TopIndex = Temp.Top();
+			if(i != Size-1)
+				AppendedQueueString += FString::Printf(TEXT("%c(%s) -> "), Temp.ValueAt(TopIndex), *GetPriorityName(Temp.PriorityAt(TopIndex)));
+			else
+				AppendedQueueString += FString::Printf(TEXT("%c(%s)"), Temp.ValueAt(TopIndex), *GetPriorityName(Temp.PriorityAt(TopIndex)));
+			Temp.Dequeue();
+		}
+		AppendedTextBlock->SetText(FText::FromString(AppendedQueueString));
+	}
+}
+
+FString UMainMenuWidget::GetPriorityName(int Prio)
+{
+	switch (Prio)
+	{
+	case PriorityQueue::EPriorityTypes::High:
+		return TEXT("High");
+	case PriorityQueue::EPriorityTypes::Highest:
+		return TEXT("Highest");
+	case PriorityQueue::EPriorityTypes::AboveNormal:
+		return TEXT("AboveNormal");
+	case PriorityQueue::EPriorityTypes::Normal:
+		return TEXT("Normal");
+	case PriorityQueue::EPriorityTypes::BelowNormal:
+		return TEXT("BelowNormal");
+	case PriorityQueue::EPriorityTypes::Low:
+		return TEXT("Low");
+	case PriorityQueue::EPriorityTypes::Lowest:
+		return TEXT("Lowest");
+	default:
+		return TEXT("Undefined");
+	}
+}
+
 void UMainMenuWidget::ProcessLab6D()
 {
 	TArray<int> Result;
-	
-	ProcessingTextBlock->SetText(FText::FromString(TEXT("Initializing arrays and writing to the file...")));
 	InitArrays();
+
+	FString SortType = TEXT("Selection");
+	for (int i = 0; i < 5; ++i)
+	{
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		Result = SelectionSort(Array6D[i]);
+		auto StopTime = std::chrono::high_resolution_clock::now(); 
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6D->AddChildToUniformGrid(NewCell, ESortTypes::Selection, i + 1);
+	}
+
+	SortType = TEXT("Shell");
+	for (int i = 0; i < 7; ++i)
+	{
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		Result = ShellSort(Array6D[i]);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6D->AddChildToUniformGrid(NewCell, ESortTypes::Shell, i + 1);
+	}
+
+	SortType = TEXT("Quick");
+	for (int i = 0; i < 7; ++i)
+	{
+		Result = Array6D[i];
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		QuickSort(Result, 0, Result.Num()-1);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6D->AddChildToUniformGrid(NewCell, ESortTypes::Quick, i + 1);
+	}
+
+	SortType = TEXT("Merge");
+	for (int i = 0; i < 7; ++i)
+	{
+		Result = Array6D[i];
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		MergeSort(Result, 0, Result.Num()-1);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6D->AddChildToUniformGrid(NewCell, ESortTypes::Merg, i + 1);
+	}
+
+	SortType = TEXT("Counting");
+	for (int i = 0; i < 7; ++i)
+	{
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		Result = CountingSort(Array6D[i]);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6D->AddChildToUniformGrid(NewCell, ESortTypes::Counting, i + 1);
+	}
+}
+
+void UMainMenuWidget::DisableOutPanels()
+{
+	OutputPanel->SetVisibility(ESlateVisibility::Hidden);
+	StatsPanel->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UMainMenuWidget::EnableOutPanels()
+{
+	OutputPanel->SetVisibility(ESlateVisibility::Visible);
+	StatsPanel->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UMainMenuWidget::PushToPriorityQueue()
+{
+	//Cosmetic function /////////////////////////////////////////
+	if(OutputPanel->GetVisibility() == ESlateVisibility::Visible)
+	{
+		DisableOutPanels();
+	}
+	/////////////////////////////////////////////////////////////
+
+	bool bSuccessfulConversion;
+	TArray<char> Values = GetEnteredChars(bSuccessfulConversion);
+	if(bSuccessfulConversion)
+	{
+		int Priority = GetEnteredPriority();
+		for (const char& Value : Values)
+		{
+			Queue.Enqueue(Value, Priority);
+		}
+	}
+}
+
+void UMainMenuWidget::AppendToPriorityQueue()
+{
+	AppendedQueue = RememberedQueue + Queue;
+	OutputQueue();
+}
+
+void UMainMenuWidget::ShowQueue()
+{
+	if(Queue.GetSize() > 0)
+	{
+		EnableOutPanels();
 	
-	FString EntryMessage = TEXT("Processing: ");
-	FString SortType = TEXT("Selection Sort");
-	ProcessingTextBlock->SetText(FText::FromString(EntryMessage + SortType));
-	
-	auto StartTime = std::chrono::high_resolution_clock::now();
-	Result = SelectionSort(Array6D_1);
-	auto StopTime = std::chrono::high_resolution_clock::now();
-	std::chrono::milliseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::milliseconds>(StopTime - StartTime);
-	IsSorted(Result, TEXT("Selection Sort"), Array6D_1.Num());
+		SizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("Size: %i"), Queue.GetSize())));
+
+		OutputQueue();
 
 	
-	
-	
+
+		// MinMaxTextBlock->SetText(FText::FromString(FString::Printf(TEXT("Min: %c; Max: %c"), Queue.GetMin(),
+		// 	Queue.GetMax())));
+	}
+}
+
+void UMainMenuWidget::Remember()
+{
+	RememberedQueue = std::move(Queue);
+	OutputQueue();
+}
+
+void UMainMenuWidget::ProcessLab7D()
+{
+	PriorityQueue PQueue;
 }
