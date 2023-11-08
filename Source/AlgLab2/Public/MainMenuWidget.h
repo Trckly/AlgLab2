@@ -6,6 +6,7 @@
 #include <chrono>
 #include "PriorityQueue.h"
 #include "CoreMinimal.h"
+#include "BinTree.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
@@ -121,6 +122,33 @@ protected:
 	
 	bool bValid;
 
+	///
+	/// Lab 8
+	///
+	BinTree Tree;
+
+	UPROPERTY(meta=(BindWidget))
+	UUniformGridPanel* BinTreeGrid;
+
+	UPROPERTY(meta=(BindWidget))
+	UEditableTextBox* PopulateTreeTextBox;
+
+	UPROPERTY(meta=(BindWidget))
+	UEditableTextBox* FindTextBox;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* FoundTextBlock;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TraversedTextBlock;
+
+	int RowCount;
+	int ColumnCount;
+	
+	TArray<TArray<UUniformGridSlot*>> GridChildren;
+	
+	TArray<TArray<UTextBlock*>> SlotsText;
+	
 public:
 	///
 	/// Sorting Functions /////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +191,14 @@ public:
 	void OutputQueue();
 
 	FString GetPriorityName(int Prio);
+
+	void EmptySlotsText();
+
+	void InitSlotsText();
+
+	void InitGrid();
+
+	void EmptyChildren();
 	
 	///
 	/// Danylo Panel Functions ////////////////////////////////////////////////////////////////////////////////////////
@@ -195,4 +231,24 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ProcessLab7D();
+
+	/// 
+	/// Lab 8
+	///
+	UFUNCTION(BlueprintCallable)
+	void Populate();
+
+	UFUNCTION(BlueprintCallable)
+	void CastToInt();
+
+	UFUNCTION(BlueprintCallable)
+	void CastToChar();
+
+	void PrintTreeSymbol(char Character);
+
+	UFUNCTION(BlueprintCallable)
+	void Find();
+
+	UFUNCTION(BlueprintCallable)
+	void Traverse();
 };

@@ -2,10 +2,8 @@
 
 
 #include "MainMenuWidget.h"
-
-#include "ParticleHelper.h"
+#include "Components/UniformGridSlot.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Tools/UEdMode.h"
 
 void UMainMenuWidget::NativeConstruct()
 {
@@ -581,4 +579,165 @@ void UMainMenuWidget::Remember()
 void UMainMenuWidget::ProcessLab7D()
 {
 	PriorityQueue PQueue;
+}
+
+void UMainMenuWidget::Populate()
+{
+	FString InsertedText = PopulateTreeTextBox->GetText().ToString();
+	InsertedText.RemoveSpacesInline();
+	BinTreeGrid->ClearChildren();
+	EmptySlotsText();
+	EmptyChildren();
+	Tree.Empty();
+	RowCount = InsertedText.Len() * 3;
+	ColumnCount = InsertedText.Len() * 3;
+	InitSlotsText();
+	InitGrid();
+	for(auto Character : InsertedText)
+	{
+		PrintTreeSymbol(Character);
+		Tree.Push(Character);
+	}
+}
+
+void UMainMenuWidget::PrintTreeSymbol(char Character)
+{
+	int RowIndex = 5;
+	int ColumnIndex = ColumnCount/2;
+	FString CurrentChar;
+	if(SlotsText[RowIndex][ColumnIndex]->GetText().ToString().Len() == 0)
+	{
+		SlotsText[RowIndex][ColumnIndex]->SetText(FText::FromString(FString::Printf(TEXT("%c"),Character)));
+	}
+	else
+	{
+		bool bFoundPlace = false;
+		while(!bFoundPlace)
+		{
+			char PrevChar = SlotsText[RowIndex][ColumnIndex]->GetText().ToString()[0];
+			if(Character < PrevChar)
+			{
+				RowIndex++;
+				ColumnIndex--;
+				CurrentChar = SlotsText[RowIndex][ColumnIndex]->GetText().ToString();
+				if(CurrentChar.Len() == 0)
+				{
+					SlotsText[RowIndex][ColumnIndex]->SetText(FText::FromString(FString::Printf(TEXT("%c"),Character)));
+					bFoundPlace = true;
+				}
+				else
+					continue;
+			}
+			else
+			{
+				RowIndex++;
+				ColumnIndex++;
+				CurrentChar = SlotsText[RowIndex][ColumnIndex]->GetText().ToString();
+				if(CurrentChar.Len() == 0)
+				{
+					SlotsText[RowIndex][ColumnIndex]->SetText(FText::FromString(FString::Printf(TEXT("%c"),Character)));
+					bFoundPlace = true;
+				}
+				else
+					continue;
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::Find()
+{
+	FString CharToFind = FindTextBox->GetText().ToString();
+	bool bFound = Tree.Find(static_cast<char>(CharToFind[0]));
+	if(bFound)
+		FoundTextBlock->SetText(FText::FromString(TEXT("Exists")));
+	else
+		FoundTextBlock->SetText(FText::FromString(TEXT("Absent")));
+}
+
+void UMainMenuWidget::Traverse()
+{
+	TArray<char> Result = Tree.Traverse();
+	FString ResultStr;
+	for (auto Char : Result)
+	{
+		ResultStr += FString::Printf(TEXT("%c "), Char);
+	}
+	TraversedTextBlock->SetText(FText::FromString(ResultStr));
+}
+
+void UMainMenuWidget::CastToInt()
+{
+	for (int i = 0; i < SlotsText.Num(); ++i)
+	{
+		for (int j = 0; j < SlotsText[i].Num(); ++j)
+		{
+			FString Char = SlotsText[i][j]->GetText().ToString();
+			if(Char.Len() > 0)
+			{
+				int CastedChar = static_cast<int>(Char[0]);
+				SlotsText[i][j]->SetText(FText::FromString(FString::FromInt(CastedChar)));
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::CastToChar()
+{
+	for (int i = 0; i < SlotsText.Num(); ++i)
+	{
+		for (int j = 0; j < SlotsText[i].Num(); ++j)
+		{
+			FString Char = SlotsText[i][j]->GetText().ToString();
+			if(Char.Len() > 0)
+			{
+				int CastedChar = FCString::Atoi(*Char);
+				char ValidChar = static_cast<char>(CastedChar);
+				SlotsText[i][j]->SetText(FText::FromString(FString::Printf(TEXT("%c"), ValidChar)));
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::EmptySlotsText()
+{
+	for (int i = 0; i < SlotsText.Num(); ++i)
+	{
+		SlotsText[i].Empty();
+	}
+	SlotsText.Empty();
+}
+
+void UMainMenuWidget::InitSlotsText()
+{
+	SlotsText.SetNum(RowCount);
+	for (int i = 0; i < RowCount; ++i)
+	{
+		SlotsText[i].SetNum(ColumnCount);
+		for (int j = 0; j < ColumnCount; ++j)
+		{
+			SlotsText[i][j] = NewObject<UTextBlock>(this);
+			SlotsText[i][j]->SetText(FText::FromString(TEXT("")));
+		}
+	}
+}
+
+void UMainMenuWidget::InitGrid()
+{
+	for(int i = 0; i < RowCount; ++i)
+	{
+		for (int j = 0; j < ColumnCount; ++j)
+		{
+			BinTreeGrid->AddChildToUniformGrid(SlotsText[i][j], i, j);
+		}
+	}
+}
+
+void UMainMenuWidget::EmptyChildren()
+{
+	for (int i = 0; i < GridChildren.Num(); ++i)
+	{
+		GridChildren[i].Empty();
+	}
+	GridChildren.Empty();
 }
