@@ -589,8 +589,8 @@ void UMainMenuWidget::Populate()
 	EmptySlotsText();
 	EmptyChildren();
 	Tree.Empty();
-	RowCount = InsertedText.Len() * 3;
-	ColumnCount = InsertedText.Len() * 3;
+	RowCount = InsertedText.Len() * 2;
+	ColumnCount = InsertedText.Len() * 2;
 	InitSlotsText();
 	InitGrid();
 	for(auto Character : InsertedText)

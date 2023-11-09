@@ -80,20 +80,12 @@ bool BinTree::Find(char Character)
 
 void BinTree::MixedTraversal(Node* RootNode, TArray<char>& Store)
 {
-	Node* Left = RootNode->LeftChild,* Right = RootNode->RightChild;
-	if (!Left && !Right)
-	{
-		return;
-	}
-	if(Left)
+	if (RootNode)
 	{
 		MixedTraversal(RootNode->LeftChild, Store);
-	}
-	if(Right)
-	{
+		Store.Push(RootNode->Value);
 		MixedTraversal(RootNode->RightChild, Store);
 	}
-	Store.Push(RootNode->Value);
 }
 
 void BinTree::Empty()
