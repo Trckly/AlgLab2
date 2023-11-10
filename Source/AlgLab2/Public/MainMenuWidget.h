@@ -142,6 +142,9 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* TraversedTextBlock;
 
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* IncestTextBlock;
+
 	int RowCount;
 	int ColumnCount;
 	
@@ -251,4 +254,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void Traverse();
+
+	UFUNCTION(BlueprintCallable)
+	void ParentAndChildren();
 };

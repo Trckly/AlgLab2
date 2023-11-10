@@ -100,3 +100,64 @@ void BinTree::Empty()
 		Root = nullptr;
 	}
 }
+
+TArray<char> BinTree::GetParentAndChildren(char Character)
+{
+	if(Find(Character))
+	{
+		TArray<char> Result;
+		Result.SetNum(3);
+		Node* Head = Root;
+		if(Head->Value == Character)
+		{
+			Result[0] = ' ';
+			Result[1] = Head->LeftChild->Value;
+			Result[2] = Head->RightChild->Value;
+		}
+		else
+		{
+			bool bFoundPlace = false;
+			while(!bFoundPlace)
+			{
+				Result[0] = Head->Value;
+				if(Head->LeftChild && Head->LeftChild->Value != Character || Head->RightChild && Head->RightChild->Value != Character)
+				{
+					if(Character < Head->Value)
+						Head = Head->LeftChild;
+					else
+						Head = Head->RightChild;
+				}
+				else if (Head->LeftChild && Head->LeftChild->Value == Character)
+				{
+					Head = Head->LeftChild;
+					if(Head->LeftChild)
+						Result[1] = Head->LeftChild->Value;
+					else
+						Result[1] = ' ';
+
+					if(Head->RightChild)
+						Result[2] = Head->RightChild->Value;
+					else
+						Result[2] = ' ';
+					bFoundPlace = true;
+				}
+				else if (Head->RightChild && Head->RightChild->Value == Character)
+				{
+					Head = Head->RightChild;
+					if(Head->LeftChild)
+						Result[1] = Head->LeftChild->Value;
+					else
+						Result[1] = ' ';
+
+					if(Head->RightChild)
+						Result[2] = Head->RightChild->Value;
+					else
+						Result[2] = ' ';
+					bFoundPlace = true;
+				}
+			}
+		}
+		return Result;
+	}
+	return TArray<char>{' ', ' ', ' '};
+}

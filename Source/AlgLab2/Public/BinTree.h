@@ -32,4 +32,6 @@ public:
 	bool Find(char Character);
 
 	void Empty();
+
+	TArray<char> GetParentAndChildren(char Character);
 };

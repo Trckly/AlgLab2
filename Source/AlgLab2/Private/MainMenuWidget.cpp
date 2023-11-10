@@ -578,7 +578,7 @@ void UMainMenuWidget::Remember()
 
 void UMainMenuWidget::ProcessLab7D()
 {
-	PriorityQueue PQueue;
+	// PriorityQueue PQueue;
 }
 
 void UMainMenuWidget::Populate()
@@ -602,7 +602,7 @@ void UMainMenuWidget::Populate()
 
 void UMainMenuWidget::PrintTreeSymbol(char Character)
 {
-	int RowIndex = 5;
+	int RowIndex = 0;
 	int ColumnIndex = ColumnCount/2;
 	FString CurrentChar;
 	if(SlotsText[RowIndex][ColumnIndex]->GetText().ToString().Len() == 0)
@@ -665,6 +665,19 @@ void UMainMenuWidget::Traverse()
 	}
 	TraversedTextBlock->SetText(FText::FromString(ResultStr));
 }
+
+void UMainMenuWidget::ParentAndChildren()
+{
+	FString Input = FindTextBox->GetText().ToString();
+	TArray<char> Result = Tree.GetParentAndChildren(Input[0]);
+	FString Output;
+	Output += FString::Printf(TEXT("Parent: %c\n"), Result[0]);
+	Output += FString::Printf(TEXT("Left Child: %c\n"), Result[1]);
+	Output += FString::Printf(TEXT("Right Child: %c"), Result[2]);
+	
+	IncestTextBlock->SetText(FText::FromString(Output));
+}
+
 
 void UMainMenuWidget::CastToInt()
 {
