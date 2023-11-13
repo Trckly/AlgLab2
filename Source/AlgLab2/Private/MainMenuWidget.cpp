@@ -12,6 +12,7 @@ void UMainMenuWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	Array6D.SetNum(7);
+	Array6A.SetNum(7);
 
 	PushButton->OnClicked.AddDynamic(this, &UMainMenuWidget::PushToPriorityQueue);
 
@@ -217,7 +218,8 @@ void UMainMenuWidget::Merge(TArray<int>& Array, int const Left, int const Mid, i
 void UMainMenuWidget::InitArrays()
 {
 	std::ofstream Fout;
-	Fout.open("/Users/bossofthisgym/Documents/Unreal Projects/AlgLab2/Logs/InitialArraysLog.txt", std::ios::trunc);
+	//Fout.open("/Users/bossofthisgym/Documents/Unreal Projects/AlgLab2/Logs/InitialArraysLog.txt", std::ios::trunc);
+	Fout.open("D:\\Algorythms\\AlgLab2\\Content\\Stuff\\InitialArraysLog.txt", std::ios::trunc);
 	Fout << "1024 elements array:\n";
 	for(int i = 0; i < 1024; ++i)
 	{
@@ -541,10 +543,10 @@ void UMainMenuWidget::PushToPriorityQueue()
 	TArray<char> Values = GetEnteredChars(bSuccessfulConversion);
 	if(bSuccessfulConversion)
 	{
-		int Priority = GetEnteredPriority();
+		int PushPriority = GetEnteredPriority();
 		for (const char& Value : Values)
 		{
-			Queue.Enqueue(Value, Priority);
+			Queue.Enqueue(Value, PushPriority);
 		}
 	}
 }
@@ -581,4 +583,356 @@ void UMainMenuWidget::Remember()
 void UMainMenuWidget::ProcessLab7D()
 {
 	PriorityQueue PQueue;
+}
+
+void UMainMenuWidget::ProcessLab6A()
+{
+	TArray<int> Result;
+	InitArraysA();
+
+	FString SortType = TEXT("Selection");
+	for (int i = 0; i < 5; ++i)
+	{
+		Result = Array6A[i];
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		SelectionSortA(Result);
+		auto StopTime = std::chrono::high_resolution_clock::now(); 
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6A->AddChildToUniformGrid(NewCell, ESortTypes::Selection, i + 1);
+	}
+
+	SortType = TEXT("Shell");
+	for (int i = 0; i < 7; ++i)
+	{
+		Result = Array6A[i];
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		ShellSortA(Result);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6A->AddChildToUniformGrid(NewCell, ESortTypes::Shell, i + 1);
+	}
+
+	SortType = TEXT("Quick");
+	for (int i = 0; i < 7; ++i)
+	{
+		Result = Array6A[i];
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		QuickSortA(Result, 0, Result.Num()-1);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6A->AddChildToUniformGrid(NewCell, ESortTypes::Quick, i + 1);
+	}
+
+	SortType = TEXT("Merge");
+	for (int i = 0; i < 7; ++i)
+	{
+		Result = Array6A[i];
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		MergeSortA(Result, 0, Result.Num()-1);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6A->AddChildToUniformGrid(NewCell, ESortTypes::Merg, i + 1);
+	}
+
+	SortType = TEXT("Counting");
+	for (int i = 0; i < 7; ++i)
+	{
+		auto StartTime = std::chrono::high_resolution_clock::now();
+		Result = CountingSortA(Array6A[i]);
+		auto StopTime = std::chrono::high_resolution_clock::now();
+		std::chrono::microseconds ExcecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+		
+		UTextBlock* NewCell = NewObject<UTextBlock>(this, UTextBlock::StaticClass());
+		NewCell->SetText(FText::FromString(FString::FormatAsNumber(ExcecutionTime.count())));
+		Table6A->AddChildToUniformGrid(NewCell, ESortTypes::Counting, i + 1);
+	}
+}
+
+void UMainMenuWidget::SelectionSortA(TArray<int>& Array)
+{
+	for (int i = 0; i < Array.Num(); i++) {
+		int IndexToSwap = i;
+		
+		for (int k = i; k < Array.Num() - 1; k++) {
+			if (Array[k + 1] > Array[IndexToSwap]) {
+				IndexToSwap = k + 1;
+			}
+		}
+		if(&Array[i] != &Array[IndexToSwap])
+		{
+			Swap(Array[i], Array[IndexToSwap]);
+		}
+	}
+}
+
+void UMainMenuWidget::ShellSortA(TArray<int>& Array)
+{
+	for (int Gap = Array.Num()/2; Gap > 0; Gap /= 2)
+	{
+
+		for (int i = Gap; i < Array.Num(); i += 1)
+		{
+
+			float Temp = Array[i];
+
+			int j;            
+			for (j = i; j >= Gap && Array[j - Gap] < Temp; j -= Gap)
+			{
+				Array[j] = Array[j - Gap];
+			}
+
+			Array[j] = Temp;
+		}
+	}
+}
+
+void UMainMenuWidget::QuickSortA(TArray<int>& Array, int Begin, int End)
+{	// base case
+	if (Begin >= End)
+		return;
+ 
+	// partitioning the Array_16Aay
+	int p = PartitionA(Array, Begin, End);
+ 
+	// Sorting the left part
+	QuickSortA(Array, Begin, p - 1);
+ 
+	// Sorting the right part
+	QuickSortA(Array, p + 1, End);
+	
+}
+
+void UMainMenuWidget::MergeSortA(TArray<int>& Array, int Begin, int End)
+{
+	if (Begin >= End)
+		return;
+ 
+	int Mid = Begin + (End - Begin) / 2;
+	MergeSortA(Array, Begin, Mid);
+	MergeSortA(Array, Mid + 1, End);
+	MergeA(Array, Begin, Mid, End);
+}
+
+TArray<int> UMainMenuWidget::CountingSortA(const TArray<int>& Array)
+{
+	const int Size = Array.Num();
+
+	// Finding the minimum element of array inputArray[].
+	int MinElement = Array[0];
+	for (int i = 1; i < Size; i++)
+	{
+		if (Array[i] < MinElement)
+		{
+			MinElement = Array[i];
+		}
+	}
+
+	// Finding the maximum element of array inputArray[].
+	int MaxElement = Array[0];
+	for (int i = 1; i < Size; i++)
+	{
+		if (Array[i] > MaxElement)
+		{
+			MaxElement = Array[i];
+		}
+	}
+
+	// Calculating the offset.
+	int Offset = abs(MinElement);
+
+	// Mapping each element of inputArray[] as an index of countArray[] array.
+	TArray<int> CountArray;
+	CountArray.Init(0, MaxElement + Offset + 1);
+	for (int i = 0; i < Size; i++)
+	{
+		CountArray[Array[i] + Offset] += 1;
+	}
+	
+	// Creating outputArray[] from countArray[] array.
+	TArray<int> OutputArray;
+	OutputArray.Init(0, Size);
+	for (int i = CountArray.Num() - 1, j = 0; i >= 0;)
+	{
+		if(CountArray[i] > 0)
+		{
+			OutputArray[j] = i - Offset;
+			CountArray[i]--;
+			j++;
+		}
+		if(CountArray[i] == 0)
+		{
+			i--;
+		}
+	}
+	
+	return OutputArray;
+}
+
+bool UMainMenuWidget::IsSortedA(const TArray<int>& Array)
+{
+	for(int i = 0; i < Array.Num() - 1; i++)
+	{
+		if(Array[i + 1] > Array[i])
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+int UMainMenuWidget::PartitionA(TArray<int>& Array, int Begin, int End)
+{
+	const float Pivot = Array[End];
+ 
+	int i = Begin - 1;
+	for(int j = Begin; j <= End - 1; j++)
+	{
+		if(Array[j] > Pivot)
+		{
+			i++;
+			SwapElementsA(Array, i,j);
+		}
+	}
+	i++;
+	SwapElementsA(Array, i, End);
+ 
+	return i;
+}
+void UMainMenuWidget::SwapElementsA(TArray<int>& Array, int First, int Second)
+{
+	const float Temp = Array[First];
+	Array[First] = Array[Second];
+	Array[Second] = Temp;
+}
+
+void UMainMenuWidget::MergeA(TArray<int>& Array, int const Left, int const Mid, int const Right)
+{
+	
+	int const SubArrayOne = Mid - Left + 1;
+	int const SubArrayTwo = Right - Mid;
+	
+	// Create temp arrays
+	auto *LeftArray = new float[SubArrayOne],
+			*RightArray = new float[SubArrayTwo];
+ 
+	// Copy data to temp arrays leftArray[] and rightArray[]
+	for (auto i = 0; i < SubArrayOne; i++)
+		LeftArray[i] = Array[Left + i];
+	for (auto j = 0; j < SubArrayTwo; j++)
+		RightArray[j] = Array[Mid + 1 + j];
+ 
+	auto IndexOfSubArrayOne = 0, IndexOfSubArrayTwo = 0;
+	int IndexOfMergedArray = Left;
+ 
+	// Merge the temp arrays back into array[left..right]
+	while (IndexOfSubArrayOne < SubArrayOne && IndexOfSubArrayTwo < SubArrayTwo)
+	{
+		if (LeftArray[IndexOfSubArrayOne] >= RightArray[IndexOfSubArrayTwo])
+		{
+			Array[IndexOfMergedArray] = LeftArray[IndexOfSubArrayOne];
+			IndexOfSubArrayOne++;
+		}
+		else
+		{
+			Array[IndexOfMergedArray] = RightArray[IndexOfSubArrayTwo];
+			IndexOfSubArrayTwo++;
+		}
+		IndexOfMergedArray++;
+	}
+ 
+	// Copy the remaining elements of
+	// left[], if there are any
+	while (IndexOfSubArrayOne < SubArrayOne)
+	{
+		Array[IndexOfMergedArray] = LeftArray[IndexOfSubArrayOne];
+		IndexOfSubArrayOne++;
+		IndexOfMergedArray++;
+	}
+ 
+	// Copy the remaining elements of
+	// right[], if there are any
+	while (IndexOfSubArrayTwo < SubArrayTwo)
+	{
+		Array[IndexOfMergedArray] = RightArray[IndexOfSubArrayTwo];
+		IndexOfSubArrayTwo++;
+		IndexOfMergedArray++;
+	}
+	delete[] LeftArray;
+	delete[] RightArray;
+	
+}
+
+void UMainMenuWidget::InitArraysA()
+{
+	std::ofstream Fout;
+	Fout.open("D:\\Algorythms\\AlgLab2\\Content\\Stuff\\InitialArraysLog.txt", std::ios::trunc);
+	Fout << "1024 elements array:\n";
+	for(int i = 0; i < 1024; ++i)
+	{
+		Array6A[0].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6A[0][i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n4096 elements array:\n";
+	for(int i = 0; i < 4096; ++i)
+	{
+		Array6A[1].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6A[1][i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n16384 elements array:\n";
+	for(int i = 0; i < 16384; ++i)
+	{
+		Array6A[2].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6A[2][i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n65536 elements array:\n";
+	for(int i = 0; i < 65536; ++i)
+	{
+		Array6A[3].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6A[3][i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n262144 elements array:\n";
+	for(int i = 0; i < 262144; ++i)
+	{
+		Array6A[4].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6A[4][i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n1048576 elements array:\n";
+	for(int i = 0; i < 1048576; ++i)
+	{
+		Array6A[5].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6A[5][i] << " ";
+	}
+	Fout << '\n';
+
+	Fout << "\n4194304 elements array:\n";
+	for(int i = 0; i < 4194304; ++i)
+	{
+		Array6A[6].Push(UKismetMathLibrary::RandomIntegerInRange(-50, 50));
+		Fout << Array6A[6][i] << " ";
+	}
+	Fout << '\n';
+	Fout.close();
 }

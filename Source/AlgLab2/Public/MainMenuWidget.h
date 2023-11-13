@@ -120,7 +120,23 @@ protected:
 	UCanvasPanel* StatsPanel;
 	
 	bool bValid;
+	
+	///
+	/// Andrii Panel Variables ////////////////////////////////////////////////////////////////////////////////////////
+	///
 
+	///
+	/// Lab 6
+	///
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ErrorTextBlockA;
+
+	UPROPERTY(meta=(BindWidget))
+	UUniformGridPanel* Table6A;
+
+	TArray<TArray<int>> Array6A;
+	
 public:
 	///
 	/// Sorting Functions /////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,4 +211,35 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ProcessLab7D();
+	
+	///
+	/// Andrii Panel Functions ////////////////////////////////////////////////////////////////////////////////////////
+	///
+
+	///
+	/// Lab 6
+	/// 
+	UFUNCTION(BlueprintCallable)
+	void ProcessLab6A();
+
+	void SelectionSortA(TArray<int>& Array);
+
+	void ShellSortA(TArray<int>& Array);
+
+	void QuickSortA(TArray<int>& Array, int Begin, int End);
+
+	void MergeSortA(TArray<int>& Array, int Begin, int End);
+
+	TArray<int> CountingSortA(const TArray<int>& Array);
+
+	bool IsSortedA(const TArray<int>& Array);
+	
+	int PartitionA(TArray<int>& Array, int Begin, int End);
+
+	void SwapElementsA(TArray<int>& Array, int First, int Second);
+
+	void MergeA(TArray<int>& Array, int const Left, int const Mid, int const Right);
+
+	void InitArraysA();
+	
 };

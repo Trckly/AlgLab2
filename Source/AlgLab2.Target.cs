@@ -11,7 +11,7 @@ public class AlgLab2Target : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange( new string[] { "AlgLab2" } );
         
-        bOverrideBuildEnvironment = true; 
-        AdditionalCompilerArguments = "-Wno-unused-but-set-variable";
+        // bOverrideBuildEnvironment = true; 
+        // AdditionalCompilerArguments = "-Wno-unused-but-set-variable";
 	}
 }
