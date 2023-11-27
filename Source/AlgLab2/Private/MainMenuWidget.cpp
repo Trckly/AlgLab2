@@ -2,10 +2,8 @@
 
 
 #include "MainMenuWidget.h"
-
-#include "ParticleHelper.h"
+#include "Components/UniformGridSlot.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Tools/UEdMode.h"
 
 void UMainMenuWidget::NativeConstruct()
 {
@@ -582,7 +580,586 @@ void UMainMenuWidget::Remember()
 
 void UMainMenuWidget::ProcessLab7D()
 {
-	PriorityQueue PQueue;
+	// PriorityQueue PQueue;
+}
+
+void UMainMenuWidget::Populate()
+{
+	FString InsertedText = PopulateTreeTextBox->GetText().ToString();
+	InsertedText.RemoveSpacesInline();
+	BinTreeGrid->ClearChildren();
+	EmptySlotsText();
+	EmptyChildren();
+	Tree.Empty();
+	RowCount = InsertedText.Len() * 2;
+	ColumnCount = InsertedText.Len() * 2;
+	InitSlotsText();
+	InitGrid();
+	for(auto Character : InsertedText)
+	{
+		PrintTreeSymbol(Character);
+		Tree.Push(Character);
+	}
+}
+
+void UMainMenuWidget::PrintTreeSymbol(char Character)
+{
+	int RowIndex = 0;
+	int ColumnIndex = ColumnCount/2;
+	FString CurrentChar;
+	if(SlotsText[RowIndex][ColumnIndex]->GetText().ToString().Len() == 0)
+	{
+		SlotsText[RowIndex][ColumnIndex]->SetText(FText::FromString(FString::Printf(TEXT("%c"),Character)));
+	}
+	else
+	{
+		bool bFoundPlace = false;
+		while(!bFoundPlace)
+		{
+			char PrevChar = SlotsText[RowIndex][ColumnIndex]->GetText().ToString()[0];
+			if(Character < PrevChar)
+			{
+				RowIndex++;
+				ColumnIndex--;
+				CurrentChar = SlotsText[RowIndex][ColumnIndex]->GetText().ToString();
+				if(CurrentChar.Len() == 0)
+				{
+					SlotsText[RowIndex][ColumnIndex]->SetText(FText::FromString(FString::Printf(TEXT("%c"),Character)));
+					bFoundPlace = true;
+				}
+				else
+					continue;
+			}
+			else
+			{
+				RowIndex++;
+				ColumnIndex++;
+				CurrentChar = SlotsText[RowIndex][ColumnIndex]->GetText().ToString();
+				if(CurrentChar.Len() == 0)
+				{
+					SlotsText[RowIndex][ColumnIndex]->SetText(FText::FromString(FString::Printf(TEXT("%c"),Character)));
+					bFoundPlace = true;
+				}
+				else
+					continue;
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::Find()
+{
+	FString CharToFind = FindTextBox->GetText().ToString();
+	bool bFound = Tree.Find(static_cast<char>(CharToFind[0]));
+	if(bFound)
+		FoundTextBlock->SetText(FText::FromString(TEXT("Exists")));
+	else
+		FoundTextBlock->SetText(FText::FromString(TEXT("Absent")));
+}
+
+void UMainMenuWidget::Traverse()
+{
+	TArray<char> Result = Tree.Traverse();
+	FString ResultStr;
+	for (auto Char : Result)
+	{
+		ResultStr += FString::Printf(TEXT("%c "), Char);
+	}
+	TraversedTextBlock->SetText(FText::FromString(ResultStr));
+}
+
+void UMainMenuWidget::ParentAndChildren()
+{
+	FString Input = FindTextBox->GetText().ToString();
+	TArray<char> Result = Tree.GetParentAndChildren(Input[0]);
+	FString Output;
+	Output += FString::Printf(TEXT("Parent: %c\n"), Result[0]);
+	Output += FString::Printf(TEXT("Left Child: %c\n"), Result[1]);
+	Output += FString::Printf(TEXT("Right Child: %c"), Result[2]);
+	
+	IncestTextBlock->SetText(FText::FromString(Output));
+}
+
+void UMainMenuWidget::Search()
+{
+	int Index;
+	if(SearchBox->GetText().ToString().IsEmpty())
+	{
+		Index = BinarySearch(FCString::Atoi(*MiddleArithmeticText->GetText().ToString()));
+	}
+	else
+	{
+		Index = BinarySearch(FCString::Atoi(*SearchBox->GetText().ToString()));
+	}
+	if(Index == -1)
+	{
+		FoundIndex->SetText(FText::FromString(TEXT("Given element is absent")));
+	}
+	else
+	{
+		FoundIndex->SetText(FText::FromString(FString::FromInt(Index)));
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Comparison count = %i"), ComparisonCount);
+}
+
+void UMainMenuWidget::Create()
+{
+	FString EnteredLengthValue = ArrayLengthBox->GetText().ToString();
+	if(!EnteredLengthValue.IsNumeric())
+	{
+		ErrorOutput->SetText(FText::FromString(TEXT("Make sure you've entered numeric value!")));
+	}
+	else
+	{
+		GenerateArrayValues(FCString::Atoi(*EnteredLengthValue));
+		
+		FString OutputString;
+		for (auto Number : ArrayToSearchIn)
+		{
+			OutputString += FString::FromInt(Number) + " ";
+		}
+		OutputString.RemoveFromEnd(" ");
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *OutputString);
+
+		int MidArithmetic = Requirement9D();
+
+		OutputString.Empty();
+		for (auto Number : ArrayToSearchIn)
+		{
+			OutputString += FString::FromInt(Number) + " ";
+		}
+		OutputString.RemoveFromEnd(" ");
+		if(ArrayToSearchIn.Num() <= 20)
+		{
+			ArrayOutputText->SetText(FText::FromString(OutputString));
+		}
+		else
+		{
+			ArrayOutputText->SetText(FText::FromString(TEXT("Array is too big to display on screen. Look for array in the logs")));
+		}
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *OutputString);
+
+		MiddleArithmeticText->SetText(FText::FromString(FString::FromInt(MidArithmetic)));
+	}
+}
+
+int UMainMenuWidget::Requirement9D()
+{
+	int MiddleArithmetic, Sum = 0;
+
+	for(const auto & Number : ArrayToSearchIn)
+	{
+		Sum += Number;
+	}
+	MiddleArithmetic =  Sum / ArrayToSearchIn.Num();
+
+	for(auto & Number : ArrayToSearchIn)
+	{
+		if(Number < MiddleArithmetic)
+		{
+			Number *= 2;
+		}
+	}
+	return MiddleArithmetic;
+}
+
+void UMainMenuWidget::GenerateArrayValues(int Length)
+{
+	if(ArrayToSearchIn.Num() > 0)
+	{
+		ArrayToSearchIn.Empty();
+	}
+
+	ArrayToSearchIn.SetNum(Length);
+	for (int i = 0; i < Length; ++i)
+	{
+		ArrayToSearchIn[i] = UKismetMathLibrary::RandomIntegerInRange(-500, 500);
+	}
+	
+	ArrayToSearchIn.Sort();
+}
+
+int UMainMenuWidget::BinarySearch(int InSearch)
+{
+	ComparisonCount= 0;
+	int L = 0, R = ArrayToSearchIn.Num();
+	while (L <= R)
+	{
+		ComparisonCount++;
+		int M = L + (R - L) / 2;
+		UE_LOG(LogTemp, Warning, TEXT("Middle element: %i. Value: %i"), M, ArrayToSearchIn[M]);
+ 
+		// Check if x is present at mid
+		if (ArrayToSearchIn[M] == InSearch)
+			return M;
+ 
+		// If x greater, ignore left half
+		if (ArrayToSearchIn[M] < InSearch)
+		{
+			L = M + 1;
+			UE_LOG(LogTemp, Warning, TEXT("Search in right half"));
+		}
+ 
+		// If x is smaller, ignore right half
+		else
+		{
+			R = M - 1;
+			UE_LOG(LogTemp, Warning, TEXT("Search in left half"));
+		}
+	}
+ 
+	// If we reach here, then element was not present
+	return -1;
+}
+
+void UMainMenuWidget::SearchWord()
+{
+	FString EnteredText = LineInputText->GetText().ToString();
+	DeleteNumbersInString(EnteredText);
+
+	FString Pattern = WordSearchBox->GetText().ToString();
+	if(Pattern.Len() != 0)
+	{
+		int Index = PatternSearchKMP(Pattern, EnteredText);
+		if(Index != -1)
+		{
+			WordSearchOutput->SetText(FText::FromString(FString::Printf(TEXT("Found at: %i"), Index)));
+		}
+		else
+		{
+			WordSearchOutput->SetText(FText::FromString(FString::Printf(TEXT("Pattern does not exist!"))));
+		}
+	}
+}
+
+int UMainMenuWidget::PatternSearchKMP(const FString& Pat, const FString& Txt)
+{
+	int M = Pat.Len();
+	int N = Txt.Len();
+ 
+	// create lps[] that will hold the longest prefix suffix
+	// values for pattern
+	TArray<int> Lps;
+	Lps.SetNum(M);
+ 
+	// Preprocess the pattern (calculate lps[] array)
+	BuildLPSArray(Pat, M, Lps);
+
+	FString LpsDebugString = TEXT("Lps = [");
+	for(const auto & Number : Lps)
+	{
+		LpsDebugString += FString::FromInt(Number) + ", ";
+	}
+	LpsDebugString.RemoveFromEnd(FString(TEXT(", ")));
+	LpsDebugString += "]";
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *LpsDebugString);
+ 
+	int i = 0; // index for txt[]
+	int j = 0; // index for pat[]
+	while ((N - i) >= (M - j)) {
+		if (Pat[j] == Txt[i]) {
+			j++;
+			i++;
+		}
+ 
+		if (j == M) {
+			return i - j;
+			j = Lps[j - 1];
+		}
+ 
+		// mismatch after j matches
+		if (i < N && Pat[j] != Txt[i]) {
+			// Do not match lps[0..lps[j-1]] characters,
+			// they will match anyway
+			if (j != 0)
+				j = Lps[j - 1];
+			else
+				i = i + 1;
+		}
+	}
+	return -1;
+}
+
+void UMainMenuWidget::DeleteNumbersInString(FString& String)
+{
+	for (int i = 0; i < String.Len(); ++i)
+	{
+		// if(String[i] == '\n')
+		// {
+		// 	String.RemoveAt(i);
+		// 	String.InsertAt(i, ' ');
+		// }
+		if(FChar::IsDigit(String[i]))
+		{
+			String.RemoveAt(i);
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *String);
+}
+
+void UMainMenuWidget::BuildLPSArray(const FString& Pat, int M, TArray<int>& Lps)
+{
+	{
+		// length of the previous longest prefix suffix
+		int Len = 0;
+ 
+		Lps[0] = 0; // Lps[0] is always 0
+ 
+		// the loop calculates Lps[i] for i = 1 to M-1
+		int i = 1;
+		while (i < M) {
+			if (Pat[i] == Pat[Len]) {
+				Len++;
+				Lps[i] = Len;
+				i++;
+			}
+			else // (Pat[i] != Pat[Len])
+			{
+				// This is tricky. Consider the example.
+				// AAACAAAA and i = 7. The idea is similar
+				// to search step.
+				if (Len != 0) {
+					Len = Lps[Len - 1];
+ 
+					// Also, note that we do not increment
+					// i here
+				}
+				else // if (len == 0)
+				{
+					Lps[i] = 0;
+					i++;
+				}
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::Search11D()
+{
+	FString Text = LineInputText_2->GetText().ToString();
+	FString Pattern = FindRequiredWord();
+
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *Text);
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *Pattern);
+
+	BoyerMooreSearch(Text, Pattern);
+}
+
+void UMainMenuWidget::BoyerMooreSearch(FString Txt, FString Pat)
+{
+	{ 
+		int M = Pat.Len(); 
+		int N = Txt.Len(); 
+ 
+		TArray<int> BadChar;
+		BadChar.SetNum(256, false);
+ 
+		/* Fill the bad character array by calling 
+		the preprocessing function badCharHeuristic() 
+		for given pattern */
+		BadCharHeuristic(Pat, BadChar);
+
+		FString DebugBadChar;
+		for (const auto& Char : BadChar)
+		{
+			if(Char != -1){
+				DebugBadChar += FString::FromInt(Char) + ", ";
+			}
+		}
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugBadChar);
+ 
+		int s = 0; // s is shift of the pattern with 
+		// respect to text 
+		while(s <= (N - M)) 
+		{
+			// DEBUG
+			UE_LOG(LogTemp, Warning, TEXT("s = %i"), s);
+			
+			int j = M - 1;
+
+			// DEBUG
+			FString DebugTextClip;
+			for (int i = s; i <= s+M; ++i)
+			{
+				DebugTextClip += Txt[i];
+			}
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugTextClip);
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *Pat);
+			
+			/* Keep reducing index j of pattern while 
+			characters of pattern and text are 
+			matching at this shift s */
+			while(j >= 0 && Pat[j] == Txt[s + j]) 
+				j--; 
+
+			// DEBUG
+			UE_LOG(LogTemp, Warning, TEXT("j after reducing = %i"), j);
+			
+			/* If the pattern is present at current 
+			shift, then index j will become -1 after 
+			the above loop */
+			if (j < 0) 
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Pattern occurs at shift = %i"), s); 
+ 
+				/* Shift the pattern so that the next 
+				character in text aligns with the last 
+				occurrence of it in pattern. 
+				The condition s+m < n is necessary for 
+				the case when pattern occurs at the end 
+				of text */
+				s += (s + M < N)? M-BadChar[Txt[s + M]] : 1; 
+ 
+			} 
+ 
+			else
+			{
+				/* Shift the pattern so that the bad character 
+				in text aligns with the last occurrence of 
+				it in pattern. The max function is used to 
+				make sure that we get a positive shift. 
+				We may get a negative shift if the last 
+				occurrence of bad character in pattern 
+				is on the right side of the current 
+				character. */
+				s += FMath::Max(1, j - BadChar[Txt[s + j]]);
+			}
+		} 
+	} 
+}
+
+void UMainMenuWidget::BadCharHeuristic(const FString& Str, TArray<int>& BadChar)
+{ 
+	int i; 
+ 
+	// Initialize all occurrences as -1 
+	for (i = 0; i < BadChar.Num(); i++) 
+		BadChar[i] = -1; 
+ 
+	// Fill the actual value of last occurrence 
+	// of a character 
+	for (i = 0; i < Str.Len(); i++) 
+		BadChar[static_cast<int>(Str[i])] = i; 
+}
+
+FString UMainMenuWidget::FindRequiredWord()
+{
+	FString FirstText = LineInputText_1->GetText().ToString();
+	TArray<FString> Words;
+	FirstText.ParseIntoArray(Words, TEXT(" "));
+
+	FString Result;
+	int Min = INT_MAX;
+	for(const auto& Word : Words)
+	{
+		int VowelsCount = 0;
+		for(const auto& Char : Word)
+		{
+			if(IsVowel(Char))
+			{
+				VowelsCount++;
+			}
+		}
+		if(Min > VowelsCount)
+		{
+			Min = VowelsCount;
+			Result = Word;
+		}
+	}
+	for (int i = 0; i < Result.Len(); ++i)
+	{
+		if(TChar<TCHAR>::IsDigit(Result[i]))
+		{
+			Result.RemoveAt(i);
+		}
+	}
+	return Result;
+}
+
+bool UMainMenuWidget::IsVowel(char Ch)
+{
+	// Convert the character to lowercase for case-insensitive comparison
+	Ch = tolower(Ch);
+
+	// Check if the character is one of the vowels
+	return (Ch == 'a' || Ch == 'e' || Ch == 'i' || Ch == 'o' || Ch == 'u');
+}
+
+
+void UMainMenuWidget::CastToInt()
+{
+	for (int i = 0; i < SlotsText.Num(); ++i)
+	{
+		for (int j = 0; j < SlotsText[i].Num(); ++j)
+		{
+			FString Char = SlotsText[i][j]->GetText().ToString();
+			if(Char.Len() > 0)
+			{
+				int CastedChar = static_cast<int>(Char[0]);
+				SlotsText[i][j]->SetText(FText::FromString(FString::FromInt(CastedChar)));
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::CastToChar()
+{
+	for (int i = 0; i < SlotsText.Num(); ++i)
+	{
+		for (int j = 0; j < SlotsText[i].Num(); ++j)
+		{
+			FString Char = SlotsText[i][j]->GetText().ToString();
+			if(Char.Len() > 0)
+			{
+				int CastedChar = FCString::Atoi(*Char);
+				char ValidChar = static_cast<char>(CastedChar);
+				SlotsText[i][j]->SetText(FText::FromString(FString::Printf(TEXT("%c"), ValidChar)));
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::EmptySlotsText()
+{
+	for (int i = 0; i < SlotsText.Num(); ++i)
+	{
+		SlotsText[i].Empty();
+	}
+	SlotsText.Empty();
+}
+
+void UMainMenuWidget::InitSlotsText()
+{
+	SlotsText.SetNum(RowCount);
+	for (int i = 0; i < RowCount; ++i)
+	{
+		SlotsText[i].SetNum(ColumnCount);
+		for (int j = 0; j < ColumnCount; ++j)
+		{
+			SlotsText[i][j] = NewObject<UTextBlock>(this);
+			SlotsText[i][j]->SetText(FText::FromString(TEXT("")));
+		}
+	}
+}
+
+void UMainMenuWidget::InitGrid()
+{
+	for(int i = 0; i < RowCount; ++i)
+	{
+		for (int j = 0; j < ColumnCount; ++j)
+		{
+			BinTreeGrid->AddChildToUniformGrid(SlotsText[i][j], i, j);
+		}
+	}
+}
+
+void UMainMenuWidget::EmptyChildren()
+{
+	for (int i = 0; i < GridChildren.Num(); ++i)
+	{
+		GridChildren[i].Empty();
+	}
+	GridChildren.Empty();
 }
 
 void UMainMenuWidget::ProcessLab6A()
