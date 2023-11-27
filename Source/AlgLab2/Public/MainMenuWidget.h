@@ -6,12 +6,16 @@
 #include <chrono>
 #include "PriorityQueue.h"
 #include "CoreMinimal.h"
+#include "CreateQueueWidget.h"
+#include "QueueWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
 #include "Components/ComboBoxString.h"
+#include "Components/EditableText.h"
 #include "Components/EditableTextBox.h"
 #include "Components/Image.h"
+#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Components/UniformGridPanel.h"
 #include "MainMenuWidget.generated.h"
@@ -62,7 +66,7 @@ protected:
 	/// Lab 7
 	///
 
-	PriorityQueue Queue;
+	PriorityQueue AwesomeQueue;
 
 	PriorityQueue RememberedQueue;
 
@@ -136,6 +140,68 @@ protected:
 	UUniformGridPanel* Table6A;
 
 	TArray<TArray<int>> Array6A;
+	
+	///
+	/// Lab 7
+	///
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* BCreateQueue;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* BFindElement;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* BAddElement;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* BMergeQueue;
+
+	UPROPERTY(meta=(BindWidget))
+	UScrollBox* SQueues;
+
+	UPROPERTY(meta=(BindWidget))
+	UEditableText* ElementToFind;
+
+	UPROPERTY(meta=(BindWidget))
+	UEditableText* ElementToAdd;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TPosition;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TElements;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TQuantity;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TMin;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TMax;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TThirdFS;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TSecondFE;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSubclassOf<UQueueWidget> QueueWidgetClass;
+
+	UPROPERTY()
+	TMap<int, UQueueWidget*> QueueWidgets;
+
+	int ActiveWidget;
+
+	int NewIndex;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSubclassOf<UCreateQueueWidget> CreateQueueWidgetClass;
+
+	UPROPERTY()
+	UCreateQueueWidget* CreateQueueWidget;
 	
 public:
 	///
@@ -242,4 +308,35 @@ public:
 
 	void InitArraysA();
 	
+
+	///
+	/// Lab 7
+	///
+
+	UFUNCTION(BlueprintCallable)
+	void StartASeven();
+
+	UFUNCTION()
+	void CreateQueueCreator();
+
+	UFUNCTION()
+	void CreateQueue(FString Name, FString Elements);
+
+	UFUNCTION()
+	void MergeQueues();
+
+	UFUNCTION()
+	void FindElementIndex();
+
+	UFUNCTION()
+	void AddElement();
+
+	UFUNCTION()
+	void RemoveWidgetCreator();
+
+	UFUNCTION()
+	void SetActiveWidget(int WidgetIndex);
+
+	UFUNCTION()
+	void ShowStats(UQueueWidget* Queue);
 };

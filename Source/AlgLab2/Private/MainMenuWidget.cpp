@@ -308,8 +308,8 @@ int UMainMenuWidget::GetEnteredPriority()
 
 int UMainMenuWidget::Find(char Character)
 {
-	PriorityQueue TempQueue(Queue);
-	for(int i = 0; i < Queue.GetSize(); ++i)
+	PriorityQueue TempQueue(AwesomeQueue);
+	for(int i = 0; i < AwesomeQueue.GetSize(); ++i)
 	{
 		if(TempQueue.Top() == Character)
 			return i;
@@ -320,8 +320,8 @@ int UMainMenuWidget::Find(char Character)
 
 char UMainMenuWidget::BeforeMin()
 {
-	int MinIndex = Find(Queue.GetMin());
-	PriorityQueue TempQueue(Queue);
+	int MinIndex = Find(AwesomeQueue.GetMin());
+	PriorityQueue TempQueue(AwesomeQueue);
 	for(int i = 0; i < MinIndex; ++i)
 	{
 		if(i == MinIndex-1)
@@ -333,8 +333,8 @@ char UMainMenuWidget::BeforeMin()
 
 char UMainMenuWidget::AfterMax()
 {
-	int MaxIndex = Find(Queue.GetMax());
-	PriorityQueue TempQueue(Queue);
+	int MaxIndex = Find(AwesomeQueue.GetMax());
+	PriorityQueue TempQueue(AwesomeQueue);
 	for(int i = 0; i < TempQueue.GetSize(); ++i)
 	{
 		if(i == MaxIndex+1)
@@ -346,7 +346,7 @@ char UMainMenuWidget::AfterMax()
 
 char UMainMenuWidget::GetThird()
 {
-	PriorityQueue TempQueue(Queue);
+	PriorityQueue TempQueue(AwesomeQueue);
 	for (int i = 0; i < 3; ++i)
 	{
 		if(i == 2)
@@ -358,7 +358,7 @@ char UMainMenuWidget::GetThird()
 
 char UMainMenuWidget::GetBeforeLast()
 {
-	PriorityQueue TempQueue(Queue);
+	PriorityQueue TempQueue(AwesomeQueue);
 	for (int i = 0; i < TempQueue.GetSize(); ++i)
 	{
 		if(i == TempQueue.GetSize() - 2)
@@ -370,11 +370,11 @@ char UMainMenuWidget::GetBeforeLast()
 
 void UMainMenuWidget::OutputQueue()
 {
-	if(Queue.GetSize() > 0)
+	if(AwesomeQueue.GetSize() > 0)
 	{
 		FString QueueString;
-		int Size = Queue.GetSize();
-		PriorityQueue Temp = Queue;
+		int Size = AwesomeQueue.GetSize();
+		PriorityQueue Temp = AwesomeQueue;
 		for(int i = 0; i < Size; ++i)
 		{
 			int TopIndex = Temp.Top();
@@ -546,24 +546,24 @@ void UMainMenuWidget::PushToPriorityQueue()
 		int PushPriority = GetEnteredPriority();
 		for (const char& Value : Values)
 		{
-			Queue.Enqueue(Value, PushPriority);
+			AwesomeQueue.Enqueue(Value, PushPriority);
 		}
 	}
 }
 
 void UMainMenuWidget::AppendToPriorityQueue()
 {
-	AppendedQueue = RememberedQueue + Queue;
+	AppendedQueue = RememberedQueue + AwesomeQueue;
 	OutputQueue();
 }
 
 void UMainMenuWidget::ShowQueue()
 {
-	if(Queue.GetSize() > 0)
+	if(AwesomeQueue.GetSize() > 0)
 	{
 		EnableOutPanels();
 	
-		SizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("Size: %i"), Queue.GetSize())));
+		SizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("Size: %i"), AwesomeQueue.GetSize())));
 
 		OutputQueue();
 
@@ -576,7 +576,7 @@ void UMainMenuWidget::ShowQueue()
 
 void UMainMenuWidget::Remember()
 {
-	RememberedQueue = std::move(Queue);
+	RememberedQueue = std::move(AwesomeQueue);
 	OutputQueue();
 }
 
@@ -935,4 +935,138 @@ void UMainMenuWidget::InitArraysA()
 	}
 	Fout << '\n';
 	Fout.close();
+}
+
+void UMainMenuWidget::StartASeven()
+{
+	ActiveWidget = 0;
+	NewIndex = 0;
+	
+	BCreateQueue->OnClicked.AddDynamic(this, &UMainMenuWidget::CreateQueueCreator);
+	BMergeQueue->OnClicked.AddDynamic(this, &UMainMenuWidget::MergeQueues);
+	BFindElement->OnClicked.AddDynamic(this, &UMainMenuWidget::FindElementIndex);
+	BAddElement->OnClicked.AddDynamic(this, &UMainMenuWidget::AddElement);
+}
+
+void UMainMenuWidget::CreateQueueCreator()
+{
+	if(CreateQueueWidgetClass)
+	{
+		APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+		CreateQueueWidget = CreateWidget<UCreateQueueWidget>(Controller, CreateQueueWidgetClass);
+		if(CreateQueueWidget)
+		{
+			CreateQueueWidget->CreateQueue.BindDynamic(this, &UMainMenuWidget::CreateQueue);
+			CreateQueueWidget->DeleteWidget.BindDynamic(this, &UMainMenuWidget::RemoveWidgetCreator);
+			CreateQueueWidget->AddToViewport();
+		}
+	}
+}
+
+void UMainMenuWidget::CreateQueue(FString Name, FString Elements)
+{
+	CreateQueueWidget->CreateQueue.Unbind();
+	CreateQueueWidget->DeleteWidget.Unbind();
+	CreateQueueWidget->RemoveFromViewport();
+	
+	if(QueueWidgetClass)
+	{
+		APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+		UQueueWidget* QWidget = CreateWidget<UQueueWidget>(Controller, QueueWidgetClass);
+		if(QWidget)
+		{
+			QWidget->Setup(Name, ++NewIndex, Elements);
+			QWidget->Activated.BindDynamic(this, &UMainMenuWidget::SetActiveWidget);
+			QueueWidgets.Add(NewIndex, QWidget);
+			SQueues->AddChild(QWidget);
+		}
+	}
+	
+}
+
+void UMainMenuWidget::MergeQueues()
+{
+	UQueueWidget* First = nullptr;
+	UQueueWidget* Second = nullptr;
+	for(const TPair<int, UQueueWidget*>& NextQueue : QueueWidgets)
+	{
+		if(NextQueue.Value->IsCheckedState() && First == nullptr)
+		{
+			First = NextQueue.Value;
+			continue;
+		}
+		if(NextQueue.Value->IsCheckedState() && Second == nullptr)
+		{
+			Second = NextQueue.Value;
+			break;
+		}
+	}
+	
+	if(First != nullptr && Second != nullptr)
+	{	
+		if(QueueWidgetClass)
+		{
+			APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+			UQueueWidget* QWidget = CreateWidget<UQueueWidget>(Controller, QueueWidgetClass);
+			if(QWidget)
+			{
+				QWidget->Setup("Merged", ++NewIndex, First->GetPriorityQueue(), Second->GetPriorityQueue());
+				QWidget->Activated.BindDynamic(this, &UMainMenuWidget::SetActiveWidget);
+				QueueWidgets.Add(NewIndex, QWidget);
+				SQueues->AddChild(QWidget);
+			}
+		}
+	}
+}
+
+void UMainMenuWidget::FindElementIndex()
+{
+	if(ActiveWidget != 0)
+	{
+		UQueueWidget* ActiveQueue = *QueueWidgets.Find(ActiveWidget);
+		TPosition->SetText(FText::FromString(FString::FromInt(ActiveQueue->FindIndexByElement(ElementToFind->GetText().ToString()))));
+	}
+}
+
+void UMainMenuWidget::AddElement()
+{
+	if(ActiveWidget != 0)
+	{
+		UQueueWidget* ActiveQueue = *QueueWidgets.Find(ActiveWidget);
+		ActiveQueue->AddElement(ElementToAdd->GetText().ToString());
+	}
+}
+
+void UMainMenuWidget::RemoveWidgetCreator()
+{
+	CreateQueueWidget->CreateQueue.Unbind();
+	CreateQueueWidget->DeleteWidget.Unbind();
+	CreateQueueWidget->RemoveFromViewport();
+}
+
+void UMainMenuWidget::SetActiveWidget(int WidgetIndex)
+{
+	if(ActiveWidget != 0)
+	{
+		UQueueWidget* Current = *QueueWidgets.Find(ActiveWidget);
+		if(Current)
+		{	
+			Current->Deactivate();
+		}
+	}
+	ActiveWidget = WidgetIndex;
+	
+	UQueueWidget* NewActive = *QueueWidgets.Find(ActiveWidget);
+	NewActive->Activate();
+	ShowStats(NewActive);
+}
+
+void UMainMenuWidget::ShowStats(UQueueWidget* Queue)
+{
+	TQuantity->SetText(FText::FromString(FString::FromInt(Queue->GetNumOfElements())));
+	TMin->SetText(FText::FromString(Queue->GetMin()));
+	TMax->SetText(FText::FromString(Queue->GetMax()));
+	TElements->SetText(FText::FromString(Queue->GetAllElements()));
+	TThirdFS->SetText(FText::FromString(Queue->GetThirdFS()));
+	TSecondFE->SetText(FText::FromString(Queue->GetSecondFE()));
 }
