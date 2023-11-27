@@ -13,6 +13,7 @@
 #include "Components/ComboBoxString.h"
 #include "Components/EditableTextBox.h"
 #include "Components/Image.h"
+#include "Components/MultiLineEditableTextBox.h"
 #include "Components/TextBlock.h"
 #include "Components/UniformGridPanel.h"
 #include "MainMenuWidget.generated.h"
@@ -151,6 +152,53 @@ protected:
 	TArray<TArray<UUniformGridSlot*>> GridChildren;
 	
 	TArray<TArray<UTextBlock*>> SlotsText;
+
+	// Lab 9 D Variables
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ArrayOutputText;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ErrorOutput;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* MiddleArithmeticText;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* FoundIndex;
+
+	UPROPERTY(meta=(BindWidget))
+	UEditableTextBox* ArrayLengthBox;
+	
+	UPROPERTY(meta=(BindWidget))
+	UEditableTextBox* SearchBox;
+
+	int ComparisonCount;
+
+	UPROPERTY()
+	TArray<int> ArrayToSearchIn;
+
+	// Lab 10 D Variables
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ErrorOutput_1;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UMultiLineEditableTextBox* LineInputText;
+
+	UPROPERTY(meta=(BindWidget))
+	UEditableTextBox* WordSearchBox;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* WordSearchOutput;
+
+	// Lab 11 D Variables
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UMultiLineEditableTextBox* LineInputText_1;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UMultiLineEditableTextBox* LineInputText_2;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* WordSearchOutput_1;
 	
 public:
 	///
@@ -257,4 +305,45 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ParentAndChildren();
+
+	///
+	/// Lab 9 D
+	///
+	UFUNCTION(BlueprintCallable)
+	void Search();
+
+	UFUNCTION(BlueprintCallable)
+	void Create();
+
+	int Requirement9D();
+
+	void GenerateArrayValues(int Length);
+
+	int BinarySearch(int InSearch);
+
+	///
+	/// Lab 10 D
+	///
+	UFUNCTION(BlueprintCallable)
+	void SearchWord();
+
+	int PatternSearchKMP(const FString& Pat, const FString& Txt);
+
+	void DeleteNumbersInString(FString& String);
+
+	void BuildLPSArray(const FString& Pat, int M, TArray<int>& Lps);
+
+	///
+	/// Lab 11 D
+	///
+	UFUNCTION(BlueprintCallable)
+	void Search11D();
+	
+	void BoyerMooreSearch(FString Txt, FString Pat);
+	
+	void BadCharHeuristic(const FString& Str, TArray<int>& BadChar);	
+	
+	FString FindRequiredWord();
+
+	bool IsVowel(char Ch);
 };

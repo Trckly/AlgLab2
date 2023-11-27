@@ -120,39 +120,94 @@ TArray<char> BinTree::GetParentAndChildren(char Character)
 			while(!bFoundPlace)
 			{
 				Result[0] = Head->Value;
-				if(Head->LeftChild && Head->LeftChild->Value != Character || Head->RightChild && Head->RightChild->Value != Character)
+				if(Head->LeftChild && Head->RightChild)
 				{
-					if(Character < Head->Value)
+					if (Head->LeftChild->Value != Character && Head->RightChild->Value != Character)
+					{
+						if(Character < Head->Value)
+							Head = Head->LeftChild;
+						else
+							Head = Head->RightChild;
+					}
+					else if (Head->LeftChild->Value == Character)
+					{
 						Head = Head->LeftChild;
-					else
+						if(Head->LeftChild)
+							Result[1] = Head->LeftChild->Value;
+						else
+							Result[1] = ' ';
+
+						if(Head->RightChild)
+							Result[2] = Head->RightChild->Value;
+						else
+							Result[2] = ' ';
+						bFoundPlace = true;
+					}
+					else if (Head->RightChild->Value == Character)
+					{
 						Head = Head->RightChild;
-				}
-				else if (Head->LeftChild && Head->LeftChild->Value == Character)
-				{
-					Head = Head->LeftChild;
-					if(Head->LeftChild)
-						Result[1] = Head->LeftChild->Value;
-					else
-						Result[1] = ' ';
+						if(Head->LeftChild)
+							Result[1] = Head->LeftChild->Value;
+						else
+							Result[1] = ' ';
 
-					if(Head->RightChild)
-						Result[2] = Head->RightChild->Value;
-					else
-						Result[2] = ' ';
-					bFoundPlace = true;
+						if(Head->RightChild)
+							Result[2] = Head->RightChild->Value;
+						else
+							Result[2] = ' ';
+						bFoundPlace = true;
+					}
 				}
-				else if (Head->RightChild && Head->RightChild->Value == Character)
+				else if (!Head->LeftChild && Head->RightChild)
 				{
-					Head = Head->RightChild;
-					if(Head->LeftChild)
-						Result[1] = Head->LeftChild->Value;
-					else
-						Result[1] = ' ';
+					if (Head->RightChild->Value != Character)
+					{
+						if(Character < Head->Value)
+							Head = Head->LeftChild;
+						else
+							Head = Head->RightChild;
+					}
+					else if(Head->RightChild->Value == Character)
+					{
+						Head = Head->RightChild;
+						if(Head->LeftChild)
+							Result[1] = Head->LeftChild->Value;
+						else
+							Result[1] = ' ';
 
-					if(Head->RightChild)
-						Result[2] = Head->RightChild->Value;
-					else
-						Result[2] = ' ';
+						if(Head->RightChild)
+							Result[2] = Head->RightChild->Value;
+						else
+							Result[2] = ' ';
+						bFoundPlace = true;
+					}
+				}
+				else if (Head->LeftChild && !Head->RightChild)
+				{
+					if (Head->LeftChild->Value != Character)
+					{
+						if(Character < Head->Value)
+							Head = Head->LeftChild;
+						else
+							Head = Head->RightChild;
+					}
+					else if(Head->LeftChild->Value == Character)
+					{
+						Head = Head->LeftChild;
+						if(Head->LeftChild)
+							Result[1] = Head->LeftChild->Value;
+						else
+							Result[1] = ' ';
+
+						if(Head->RightChild)
+							Result[2] = Head->RightChild->Value;
+						else
+							Result[2] = ' ';
+						bFoundPlace = true;
+					}
+				}
+				else
+				{
 					bFoundPlace = true;
 				}
 			}
