@@ -1647,3 +1647,200 @@ void UMainMenuWidget::ShowStats(UQueueWidget* Queue)
 	TThirdFS->SetText(FText::FromString(Queue->GetThirdFS()));
 	TSecondFE->SetText(FText::FromString(Queue->GetSecondFE()));
 }
+
+///
+/// Lab 8A
+///
+
+void UMainMenuWidget::Bind8A()
+{
+	if(!BAddToTree->OnClicked.IsBound())
+	{
+		BAddToTree->OnClicked.AddDynamic(this, &UMainMenuWidget::AddToTreeA);
+	}
+	
+	if(!BWalk->OnClicked.IsBound())
+	{
+		BWalk->OnClicked.AddDynamic(this, &UMainMenuWidget::WalkTreeA);
+	}
+	
+	if(!BFindConnections->OnClicked.IsBound())
+	{
+		BFindConnections->OnClicked.AddDynamic(this, &UMainMenuWidget::FindConnectionsA);
+	}
+	
+	if(!BFindIfExists->OnClicked.IsBound())
+	{
+		BFindIfExists->OnClicked.AddDynamic(this, &UMainMenuWidget::FindIfExistsA);
+	}
+	
+	if(!BFindSecond->OnClicked.IsBound())
+	{
+		BFindSecond->OnClicked.AddDynamic(this, &UMainMenuWidget::FindSecondEvenA);
+	}
+
+	if(!BTree)
+	{
+		BTree = NewObject<UMyAwesomeBTree>();
+		BTree->Construct();
+		BTree->SetOffset.BindDynamic(this, &UMainMenuWidget::DisplayTree);
+	}
+
+	GRow = 12;
+	GColumn = 18;
+
+	TArray<UTextBlock*> TextRows;
+	TextRows.SetNum(GColumn);
+	
+	GridBlocks.Init(TextRows, GRow);
+	for(int i = 0; i < GRow; i++)
+	{
+		for(int j = 0; j < GColumn; j++)
+		{
+			UTextBlock* NewBlock = NewObject<UTextBlock>();
+			NewBlock->SetText(FText::FromString(FString(" ")));
+			GridBlocks[i][j] = NewBlock;
+			GBTree->AddChildToUniformGrid(GridBlocks[i][j], i, j);
+		}
+	}
+}
+
+void UMainMenuWidget::AddToTreeA()
+{
+	if(!ESetTree->GetText().ToString().IsNumeric())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Non digit value passed!"));
+		return;
+	}
+		
+	float Node = FCString::Atof(*ESetTree->GetText().ToString());
+	BTree->Add(Node);
+}
+
+void UMainMenuWidget::WalkTreeA()
+{
+	FString ElementString;
+	TreeElementsA = BTree->WalkTheTree();
+
+	if(TreeElementsA)
+	{
+		for(int i = 0; i < BTree->Num(); i++)
+		{
+			ElementString += FString::SanitizeFloat(TreeElementsA[i]);
+			
+			if(i != BTree->Num() -1)
+				ElementString += ", ";
+		}
+	}
+
+	TTreeElements->SetText(FText::FromString(ElementString));
+}
+
+void UMainMenuWidget::FindConnectionsA()
+{
+	FString Result;
+	
+	if(!EElementToFind->GetText().ToString().IsNumeric())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Non digit value passed!"));
+		return;
+	}
+
+	float Element = FCString::Atof(*EElementToFind->GetText().ToString());
+
+	FTreeNode* NodeElement = BTree->Find(Element, BTree->GetRoot());
+
+	if(NodeElement)
+	{
+		Result += "Parent: ";
+		if(NodeElement->Parent)
+		{
+			 Result += FString::SanitizeFloat(NodeElement->Parent->Value) + "\n";
+		}else
+		{
+			Result += "None\n";
+		}
+		
+		Result += "Left child: ";
+		if(NodeElement->LeftChild)
+		{
+			 Result += FString::SanitizeFloat(NodeElement->LeftChild->Value) + "\n";
+		}else
+		{
+			Result += "None\n";
+		}
+		
+		Result += "Right child: ";
+		if(NodeElement->RightChild)
+		{
+			 Result += FString::SanitizeFloat(NodeElement->RightChild->Value);
+		}else
+		{
+			Result += "None";
+		}
+	}
+
+	if(!Result.IsEmpty())
+	{
+		TConnections->SetText(FText::FromString(Result));
+	}
+}
+
+void UMainMenuWidget::FindIfExistsA()
+{
+	
+	if(!EElementToFind->GetText().ToString().IsNumeric())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Non digit value passed!"));
+		return;
+	}
+
+	float Element = FCString::Atof(*EElementToFind->GetText().ToString());
+
+	if(BTree->Exists(Element, BTree->GetRoot()))
+	{
+		TExists->SetText(FText::FromString(FString("Exists")));
+	}
+	else
+	{
+		TExists->SetText(FText::FromString(FString("Absent")));
+	}
+}
+
+void UMainMenuWidget::FindSecondEvenA()
+{
+	bool IsSecond(false);
+	
+	TreeElementsA = BTree->WalkTheTree();
+	if(TreeElementsA)
+	{
+		for(int i = BTree->Num() - 1; i >= 0; i--)
+		{
+			int Element = static_cast<int>(TreeElementsA[i]);
+			if (Element % 2 == 0 && IsSecond)
+			{
+				TEvenElement->SetText(FText::FromString(FString::SanitizeFloat(TreeElementsA[i])));
+				break;
+			}
+			if(Element % 2 == 0)
+				IsSecond = true;
+		}
+	}
+}
+
+void UMainMenuWidget::DisplayTree(FTreeNode& Element, int RowOffset, int ColumnOffset)
+{
+	if(!Element.Parent)
+	{
+		GridBlocks[RowOffset][GColumn / 2]->SetText(FText::FromString(FString::SanitizeFloat(Element.Value)));
+		Element.Offset = GColumn / 2;
+	}else if(ColumnOffset > 0)
+	{
+		GridBlocks[RowOffset][Element.Parent->Offset + GColumn / (2 + RowOffset)]->SetText(FText::FromString(FString::SanitizeFloat(Element.Value)));
+		Element.Offset = Element.Parent->Offset + GColumn / (2 + RowOffset);
+	}else
+	{
+		GridBlocks[RowOffset][Element.Parent->Offset - GColumn / (2 + RowOffset)]->SetText(FText::FromString(FString::SanitizeFloat(Element.Value)));
+		Element.Offset = Element.Parent->Offset - GColumn / (2 + RowOffset);
+	}
+}

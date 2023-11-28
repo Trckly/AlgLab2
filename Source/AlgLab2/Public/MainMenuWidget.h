@@ -8,6 +8,7 @@
 #include "CoreMinimal.h"
 #include "BinTree.h"
 #include "CreateQueueWidget.h"
+#include "MyAwesomeBTree.h"
 #include "QueueWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
@@ -282,6 +283,59 @@ protected:
 
 	UPROPERTY()
 	UCreateQueueWidget* CreateQueueWidget;
+
+	///
+	/// Lab 8A
+	///
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BAddToTree;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BWalk;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindConnections;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindIfExists;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindSecond;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableTextBox* ESetTree;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableTextBox* EElementToFind;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TExists;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TEvenElement;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TTreeElements;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TConnections;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UUniformGridPanel* GBTree;
+	
+	float* TreeElementsA;
+
+	UPROPERTY()
+	UMyAwesomeBTree* BTree;
+	
+	TArray<TArray<UTextBlock*>> GridBlocks;
+
+	UPROPERTY()
+	int GRow;
+
+	UPROPERTY()
+	int GColumn;
 	
 public:
 	///
@@ -491,4 +545,29 @@ public:
 
 	UFUNCTION()
 	void ShowStats(UQueueWidget* Queue);
+
+	///
+	/// Lab 8A
+	///
+
+	UFUNCTION(BlueprintCallable)
+	void Bind8A();
+
+	UFUNCTION()
+	void AddToTreeA();
+
+	UFUNCTION()
+	void WalkTreeA();
+
+	UFUNCTION()
+	void FindConnectionsA();
+
+	UFUNCTION()
+	void FindIfExistsA();
+
+	UFUNCTION()
+	void FindSecondEvenA();
+
+	UFUNCTION()
+	void DisplayTree(FTreeNode& Element, int RowOffset, int ColumnOffset);
 };
