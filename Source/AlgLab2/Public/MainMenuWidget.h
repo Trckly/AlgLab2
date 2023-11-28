@@ -336,7 +336,44 @@ protected:
 
 	UPROPERTY()
 	int GColumn;
-	
+
+	///
+	/// Lab 9A
+	///
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TGeneratedArray;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TStepsCount;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TIsFound;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableText* EMinElement;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableText* EArraySize;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableText* EDesiredElement; 
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BGenerate;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BChangeAndFind;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UCheckBox* CChangeArray;
+
+	UPROPERTY()
+	TArray<int> Array9A;
+
+	bool IsChanged9A = false;
+
+	int SumOfMinAbs;
 public:
 	///
 	/// Sorting Functions /////////////////////////////////////////////////////////////////////////////////////////////
@@ -570,4 +607,20 @@ public:
 
 	UFUNCTION()
 	void DisplayTree(FTreeNode& Element, int RowOffset, int ColumnOffset);
+
+	///
+	/// Lab 9A
+	///
+
+	UFUNCTION(BlueprintCallable)
+	void Bind9A();
+
+	UFUNCTION()
+	void Generate();
+
+	UFUNCTION()
+	void ChangeAndFind();
+
+	UFUNCTION()
+	void Find9A();
 };

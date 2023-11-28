@@ -2,6 +2,8 @@
 
 
 #include "MainMenuWidget.h"
+
+#include "PhysicsSettingsEnums.h"
 #include "Components/UniformGridSlot.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -1842,5 +1844,160 @@ void UMainMenuWidget::DisplayTree(FTreeNode& Element, int RowOffset, int ColumnO
 	{
 		GridBlocks[RowOffset][Element.Parent->Offset - GColumn / (2 + RowOffset)]->SetText(FText::FromString(FString::SanitizeFloat(Element.Value)));
 		Element.Offset = Element.Parent->Offset - GColumn / (2 + RowOffset);
+	}
+}
+
+///
+/// Lab 9A
+///
+
+void UMainMenuWidget::Bind9A()
+{
+	if(!BGenerate->OnClicked.IsBound())
+	{
+		BGenerate->OnClicked.AddDynamic(this, &UMainMenuWidget::Generate);
+	}
+	if(!BChangeAndFind->OnClicked.IsBound())
+	{
+		BChangeAndFind->OnClicked.AddDynamic(this, &UMainMenuWidget::ChangeAndFind);
+	}
+	
+}
+
+void UMainMenuWidget::Generate()
+{
+	FString ArrayStr;
+	
+	int MinValue(0);
+	if(EMinElement->GetText().IsNumeric())
+	{
+		MinValue = FCString::Atoi(*EMinElement->GetText().ToString());
+	}
+
+	int ArraySize(0);
+	if(EArraySize->GetText().IsNumeric())
+	{
+		ArraySize = FCString::Atoi(*EArraySize->GetText().ToString());
+	}
+
+	if(Array9A.Num() != 0)
+		Array9A.Empty();
+	
+	for(int i = 0; i < ArraySize; i++)
+	{
+		Array9A.Add(MinValue);
+		if(MinValue < 0)
+			SumOfMinAbs += FMath::Abs(MinValue);
+		
+		ArrayStr += FString::FromInt(MinValue++);
+		if(i != ArraySize - 1)
+			ArrayStr += ", ";
+	}
+
+	TGeneratedArray->SetText(FText::FromString(ArrayStr));
+	IsChanged9A = false;
+}
+
+void UMainMenuWidget::ChangeAndFind()
+{
+	if(Array9A.Num() == 0)
+	{
+		return;
+	}
+	if(!EDesiredElement->GetText().IsNumeric())
+	{
+		return;
+	}
+
+	if(CChangeArray->IsChecked() && !IsChanged9A)
+	{
+		if(Array9A.Num() >= 3)
+		{
+			int Temp = Array9A[1];
+			Array9A[1] = Array9A[2];
+			Array9A[2] = Temp;
+		}
+
+		if(SumOfMinAbs != 0)
+			Array9A[Array9A.Num() - 1] /= SumOfMinAbs;
+		
+		FString ArrayStr;
+		for(int i = 0; i < Array9A.Num(); i++)
+		{		
+			ArrayStr += FString::FromInt(Array9A[i]);
+			if(i != Array9A.Num() - 1)
+				ArrayStr += ", ";
+		}
+
+		TGeneratedArray->SetText(FText::FromString(ArrayStr));
+		IsChanged9A = true;
+	}
+
+	Find9A();
+}
+
+void UMainMenuWidget::Find9A()
+{
+	bool IsFound = false;
+	int Desired = FCString::Atoi(*EDesiredElement->GetText().ToString());
+		
+	int Steps(0);
+	
+	int Left = 0;
+	int Right = Array9A.Num();
+	int Mid = Array9A.Num() / 2 - 1;
+	int PrevMid = Mid;
+	
+	if(Array9A[0] <= Desired && Array9A.Last() >= Desired)
+	{
+		if(Array9A[0] == Desired)
+		{
+			IsFound = true;
+		}
+		else if(Array9A.Last() == Desired)
+		{
+			IsFound = true;
+		}
+		else
+		{
+			for(;;Mid = (Right - Left) / 2 + Left)
+			{
+				Steps++;
+		
+				if(Array9A[Mid] == Desired)
+				{
+					IsFound = true;
+					break;
+				}
+
+				if(Array9A[Mid] > Desired)
+				{
+					PrevMid = Mid;
+					Right = Mid;
+					continue;
+				}
+
+				if(Array9A[Mid] < Desired)
+				{
+					PrevMid = Mid;
+					Left = Mid;
+					continue;
+				}
+
+				if(Mid == Left || Mid == Right || PrevMid == Mid)
+					break;
+		
+			}
+		}
+	}
+	if(IsFound)
+	{
+		TIsFound->SetText(FText::FromString(FString("True")));
+		TStepsCount->SetText(FText::FromString(FString::FromInt(Steps)));
+	}
+	else
+	{
+		TIsFound->SetText(FText::FromString(FString("False")));
+		TStepsCount->SetText(FText::FromString(FString("Nan")));
 	}
 }
