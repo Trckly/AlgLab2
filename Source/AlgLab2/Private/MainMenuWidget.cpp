@@ -2001,3 +2001,320 @@ void UMainMenuWidget::Find9A()
 		TStepsCount->SetText(FText::FromString(FString("Nan")));
 	}
 }
+
+void UMainMenuWidget::Bind10_11A()
+{
+	if(!BFindAndDelete->OnClicked.IsBound())
+	{
+		BFindAndDelete->OnClicked.AddDynamic(this, &UMainMenuWidget::FindAndDelete);
+	}
+
+	FoundIndexA = -1;
+}
+
+void UMainMenuWidget::FindAndDelete()
+{
+	DeleteWord();
+	FindWord();
+}
+
+void UMainMenuWidget::FindWord()
+{
+	if(TSecondText->GetText().IsEmpty() || WordA.IsEmpty())
+	{
+		return;
+	}
+	std::chrono::time_point<std::chrono::steady_clock> StartTime, StopTime;
+	if(CBMethod->GetSelectedIndex() == 0)
+	{
+		StartTime = std::chrono::high_resolution_clock::now();
+		KMP_Method(TCHAR_TO_ANSI(*WordA), TCHAR_TO_ANSI(*TSecondText->GetText().ToString()), false);
+		StopTime = std::chrono::high_resolution_clock::now();
+	}
+	else if(CBMethod->GetSelectedIndex() == 1)
+	{
+		StartTime = std::chrono::high_resolution_clock::now();
+		BM_Method(TCHAR_TO_ANSI(*WordA), TCHAR_TO_ANSI(*TSecondText->GetText().ToString()), false);
+		StopTime = std::chrono::high_resolution_clock::now();
+	}
+	std::chrono::microseconds ExecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+
+	UE_LOG(LogTemp, Warning, TEXT("Method took %lld microseconds"), ExecutionTime.count());
+	
+	TWord->SetText(FText::FromString(WordA));
+	if(FoundIndexA >= 0)
+	{
+		TFirstIndex->SetText(FText::FromString(FString::FromInt(FoundIndexA)));
+	}else
+	{
+		TFirstIndex->SetText(FText::FromString(FString("Nan")));
+	}
+}
+
+void UMainMenuWidget::DeleteWord()
+{
+	TMap<FString, int> Words;
+	
+	FString Text = TFirstText->GetText().ToString();
+	FString SavedText = Text;
+	Text = Text.ToLower();
+	char* Result = TCHAR_TO_ANSI(*Text);
+	char* NewWordPtr = nullptr;
+	char NewWord[40];
+	
+	int SizeOfNewWord = 0;
+
+	for(int i = 0; i < Text.Len(); i++)
+	{
+		if(std::isalpha(Result[i]))
+		{
+			if(SizeOfNewWord == 0)
+			{
+				NewWordPtr = Result + i;
+			}
+			SizeOfNewWord++;
+		}else if(!std::isalpha(Result[i]) &&  SizeOfNewWord != 0)
+		{
+			strncpy_s(NewWord, NewWordPtr, SizeOfNewWord);
+
+			FString Str(NewWord);
+
+			if(Words.Num() == 0)
+			{
+				Words.Add(Str, 1);
+			}
+			else
+			{
+				bool WordFound = false;
+				for(auto& Element : Words)
+				{
+					if(Element.Key == Str)
+					{
+						Element.Value++;
+						WordFound = true;
+					}
+				}
+				if(!WordFound)
+				{
+					Words.Add(Str, 1);
+				}
+			}
+			SizeOfNewWord = 0;
+		}
+	}
+
+	int MaxQuantity = 0;
+	if(Words.Num() != 0)
+	{
+		
+		for(auto& Element : Words)
+		{
+			if(Element.Value > MaxQuantity)
+			{
+				MaxQuantity = Element.Value;
+				WordA = Element.Key;
+			}
+		}
+	}
+	if(!WordA.IsEmpty())
+	{
+		if(CBMethod->GetSelectedIndex() == 0)
+			KMP_Method(TCHAR_TO_ANSI(*WordA), Result, true);
+		else if(CBMethod->GetSelectedIndex() == 1)
+			BM_Method(TCHAR_TO_ANSI(*WordA), Result, true);
+	}
+	
+	if(IndexesToDelete.Num() != 0)
+	{
+		for(int i = IndexesToDelete.Num() - 1; i >= 0; i--)
+		{
+			SavedText.RemoveAt(IndexesToDelete[i], WordA.Len());
+		}
+	}
+
+	TFirstText->SetText(FText::FromString(SavedText));
+}
+
+void UMainMenuWidget::KMP_Method(char* pat, char* txt, bool ToRemove)
+{
+	int M = strlen(pat);
+	int N = strlen(txt);
+ 
+	// create lps[] that will hold the longest prefix suffix
+	// values for pattern
+	int* lps = new int[M];
+ 
+	// Preprocess the pattern (calculate lps[] array)
+	FindLps(pat, M, lps);
+
+	FString LpsDebugString = TEXT("Lps = [");
+	for(int i = 0; i < M; i++)
+	{
+		LpsDebugString += FString::FromInt(lps[i]) + ", ";
+	}
+	LpsDebugString.RemoveFromEnd(FString(TEXT(", ")));
+	LpsDebugString += "]";
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *LpsDebugString);
+	
+	int i = 0; // index for txt[]
+	int j = 0; // index for pat[]
+	while ((N - i) >= (M - j)) {
+		if (pat[j] == txt[i]) {
+			j++;
+			i++;
+		}
+ 
+		if (j == M) {
+			if(!ToRemove)
+			{
+				FoundIndexA = i - j;
+				return;
+			}
+			IndexesToDelete.Add(i - j);
+			j = lps[j - 1];
+		}
+ 
+		// mismatch after j matches
+		else if (i < N && pat[j] != txt[i]) {
+			// Do not match lps[0..lps[j-1]] characters,
+			// they will match anyway
+			if (j != 0)
+				j = lps[j - 1];
+			else
+				i = i + 1;
+		}
+	}
+	
+	delete[] lps;
+}
+
+void UMainMenuWidget::FindLps(char* pat, int M, int* lps)
+{
+	// length of the previous longest prefix suffix
+	int len = 0;
+ 
+	lps[0] = 0; // lps[0] is always 0
+ 
+	// the loop calculates lps[i] for i = 1 to M-1
+	int i = 1;
+	while (i < M) {
+		if (pat[i] == pat[len]) {
+			len++;
+			lps[i] = len;
+			i++;
+		}
+		else // (pat[i] != pat[len])
+			{
+			// This is tricky. Consider the example.
+			// AAACAAAA and i = 7. The idea is similar
+			// to search step.
+			if (len != 0) {
+				len = lps[len - 1];
+ 
+				// Also, note that we do not increment
+				// i here
+			}
+			else // if (len == 0)
+				{
+				lps[i] = 0;
+				i++;
+				}
+			}
+	}
+}
+
+void UMainMenuWidget::BM_Method(char* pat, char* txt, bool ToRemove)
+{
+	int m = strlen(pat); 
+	int n = strlen(txt); 
+ 
+	int* badchar = new int[256]; 
+ 
+	/* Fill the bad character array by calling 
+	the preprocessing function badCharHeuristic() 
+	for given pattern */
+	BadCharHeu(pat, m, badchar, 256); 
+	
+	FString DebugBadChar;
+	for (int i = 0; i < 256; i++)
+	{
+		if(badchar[i] != -1){
+			DebugBadChar += FString::FromInt(badchar[i]) + ", ";
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugBadChar);
+ 
+	int s = 0; // s is shift of the pattern with 
+	// respect to text 
+	while(s <= (n - m)) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("s = %i"), s);
+
+		int j = m - 1;
+		
+		FString DebugTextClip;
+		for (int i = s; i <= s+m; ++i)
+		{
+			DebugTextClip += txt[i];
+		}
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugTextClip);
+		UE_LOG(LogTemp, Warning, TEXT("%hs"), pat);
+		
+		/* Keep reducing index j of pattern while 
+		characters of pattern and text are 
+		matching at this shift s */
+		while(j >= 0 && pat[j] == txt[s + j]) 
+			j--;
+		
+		UE_LOG(LogTemp, Warning, TEXT("j after reducing = %i"), j);
+		
+		/* If the pattern is present at current 
+		shift, then index j will become -1 after 
+		the above loop */
+		if (j < 0) 
+		{ 
+			//cout << "pattern occurs at shift = " <<  s << endl;
+			
+			if(!ToRemove)
+			{
+				FoundIndexA = s;
+				return;
+			}
+			IndexesToDelete.Add(s);
+			
+			/* Shift the pattern so that the next 
+			character in text aligns with the last 
+			occurrence of it in pattern. 
+			The condition s+m < n is necessary for 
+			the case when pattern occurs at the end 
+			of text */
+			s += (s + m < n)? m-badchar[txt[s + m]] : 1; 
+ 
+		} 
+ 
+		else
+			/* Shift the pattern so that the bad character 
+			in text aligns with the last occurrence of 
+			it in pattern. The max function is used to 
+			make sure that we get a positive shift. 
+			We may get a negative shift if the last 
+			occurrence of bad character in pattern 
+			is on the right side of the current 
+			character. */
+			s += std::max(1, j - badchar[txt[s + j]]); 
+	}
+}
+
+void UMainMenuWidget::BadCharHeu(char* str, int size, int* badchar, int numOfBad)
+{ 
+	int i; 
+ 
+	// Initialize all occurrences as -1 
+	for (i = 0; i < numOfBad; i++) 
+		badchar[i] = -1; 
+ 
+	// Fill the actual value of last occurrence 
+	// of a character 
+	for (i = 0; i < size; i++) 
+		badchar[(int) str[i]] = i;
+}

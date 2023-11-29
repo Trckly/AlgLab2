@@ -17,6 +17,7 @@
 #include "Components/EditableText.h"
 #include "Components/EditableTextBox.h"
 #include "Components/Image.h"
+#include "Components/MultiLineEditableText.h"
 #include "Components/MultiLineEditableTextBox.h"
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
@@ -374,6 +375,36 @@ protected:
 	bool IsChanged9A = false;
 
 	int SumOfMinAbs;
+
+	///
+	/// Lab 10-11A
+	///
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TFirstText;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TSecondText;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TWord;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TFirstIndex;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindAndDelete;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UComboBoxString* CBMethod;
+
+	UPROPERTY()
+	FString WordA;
+
+	TArray<int> IndexesToDelete;
+
+	int FoundIndexA;
+	
 public:
 	///
 	/// Sorting Functions /////////////////////////////////////////////////////////////////////////////////////////////
@@ -623,4 +654,28 @@ public:
 
 	UFUNCTION()
 	void Find9A();
+
+	///
+	/// Lab 10-11A
+	///
+
+	UFUNCTION(BlueprintCallable)
+	void Bind10_11A();
+
+	UFUNCTION()
+	void FindAndDelete();
+
+	UFUNCTION()
+	void FindWord();
+
+	UFUNCTION()
+	void DeleteWord();
+
+	void KMP_Method(char* pat, char* txt, bool ToRemove);
+
+	void FindLps(char* pat, int M, int* lps);
+
+	void BM_Method(char* pat, char* txt, bool ToRemove);
+
+	void BadCharHeu(char* str, int size, int* badchar, int numOfBad);
 };
