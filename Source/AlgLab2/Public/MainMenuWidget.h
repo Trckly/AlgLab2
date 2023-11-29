@@ -8,6 +8,7 @@
 #include "CoreMinimal.h"
 #include "BinTree.h"
 #include "CreateQueueWidget.h"
+#include "MyAwesomeBTree.h"
 #include "QueueWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
@@ -16,6 +17,7 @@
 #include "Components/EditableText.h"
 #include "Components/EditableTextBox.h"
 #include "Components/Image.h"
+#include "Components/MultiLineEditableText.h"
 #include "Components/MultiLineEditableTextBox.h"
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
@@ -282,6 +284,126 @@ protected:
 
 	UPROPERTY()
 	UCreateQueueWidget* CreateQueueWidget;
+
+	///
+	/// Lab 8A
+	///
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BAddToTree;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BWalk;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindConnections;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindIfExists;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindSecond;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableTextBox* ESetTree;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableTextBox* EElementToFind;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TExists;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TEvenElement;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TTreeElements;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TConnections;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UUniformGridPanel* GBTree;
+	
+	float* TreeElementsA;
+
+	UPROPERTY()
+	UMyAwesomeBTree* BTree;
+	
+	TArray<TArray<UTextBlock*>> GridBlocks;
+
+	UPROPERTY()
+	int GRow;
+
+	UPROPERTY()
+	int GColumn;
+
+	///
+	/// Lab 9A
+	///
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TGeneratedArray;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TStepsCount;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TIsFound;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableText* EMinElement;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableText* EArraySize;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UEditableText* EDesiredElement; 
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BGenerate;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BChangeAndFind;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UCheckBox* CChangeArray;
+
+	UPROPERTY()
+	TArray<int> Array9A;
+
+	bool IsChanged9A = false;
+
+	int SumOfMinAbs;
+
+	///
+	/// Lab 10-11A
+	///
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TFirstText;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TSecondText;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TWord;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UTextBlock* TFirstIndex;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UButton* BFindAndDelete;
+
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	UComboBoxString* CBMethod;
+
+	UPROPERTY()
+	FString WordA;
+
+	TArray<int> IndexesToDelete;
+
+	int FoundIndexA;
 	
 public:
 	///
@@ -491,4 +613,69 @@ public:
 
 	UFUNCTION()
 	void ShowStats(UQueueWidget* Queue);
+
+	///
+	/// Lab 8A
+	///
+
+	UFUNCTION(BlueprintCallable)
+	void Bind8A();
+
+	UFUNCTION()
+	void AddToTreeA();
+
+	UFUNCTION()
+	void WalkTreeA();
+
+	UFUNCTION()
+	void FindConnectionsA();
+
+	UFUNCTION()
+	void FindIfExistsA();
+
+	UFUNCTION()
+	void FindSecondEvenA();
+
+	UFUNCTION()
+	void DisplayTree(FTreeNode& Element, int RowOffset, int ColumnOffset);
+
+	///
+	/// Lab 9A
+	///
+
+	UFUNCTION(BlueprintCallable)
+	void Bind9A();
+
+	UFUNCTION()
+	void Generate();
+
+	UFUNCTION()
+	void ChangeAndFind();
+
+	UFUNCTION()
+	void Find9A();
+
+	///
+	/// Lab 10-11A
+	///
+
+	UFUNCTION(BlueprintCallable)
+	void Bind10_11A();
+
+	UFUNCTION()
+	void FindAndDelete();
+
+	UFUNCTION()
+	void FindWord();
+
+	UFUNCTION()
+	void DeleteWord();
+
+	void KMP_Method(char* pat, char* txt, bool ToRemove);
+
+	void FindLps(char* pat, int M, int* lps);
+
+	void BM_Method(char* pat, char* txt, bool ToRemove);
+
+	void BadCharHeu(char* str, int size, int* badchar, int numOfBad);
 };

@@ -2,6 +2,8 @@
 
 
 #include "MainMenuWidget.h"
+
+#include "PhysicsSettingsEnums.h"
 #include "Components/UniformGridSlot.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -1646,4 +1648,673 @@ void UMainMenuWidget::ShowStats(UQueueWidget* Queue)
 	TElements->SetText(FText::FromString(Queue->GetAllElements()));
 	TThirdFS->SetText(FText::FromString(Queue->GetThirdFS()));
 	TSecondFE->SetText(FText::FromString(Queue->GetSecondFE()));
+}
+
+///
+/// Lab 8A
+///
+
+void UMainMenuWidget::Bind8A()
+{
+	if(!BAddToTree->OnClicked.IsBound())
+	{
+		BAddToTree->OnClicked.AddDynamic(this, &UMainMenuWidget::AddToTreeA);
+	}
+	
+	if(!BWalk->OnClicked.IsBound())
+	{
+		BWalk->OnClicked.AddDynamic(this, &UMainMenuWidget::WalkTreeA);
+	}
+	
+	if(!BFindConnections->OnClicked.IsBound())
+	{
+		BFindConnections->OnClicked.AddDynamic(this, &UMainMenuWidget::FindConnectionsA);
+	}
+	
+	if(!BFindIfExists->OnClicked.IsBound())
+	{
+		BFindIfExists->OnClicked.AddDynamic(this, &UMainMenuWidget::FindIfExistsA);
+	}
+	
+	if(!BFindSecond->OnClicked.IsBound())
+	{
+		BFindSecond->OnClicked.AddDynamic(this, &UMainMenuWidget::FindSecondEvenA);
+	}
+
+	if(!BTree)
+	{
+		BTree = NewObject<UMyAwesomeBTree>();
+		BTree->Construct();
+		BTree->SetOffset.BindDynamic(this, &UMainMenuWidget::DisplayTree);
+	}
+
+	GRow = 12;
+	GColumn = 18;
+
+	TArray<UTextBlock*> TextRows;
+	TextRows.SetNum(GColumn);
+	
+	GridBlocks.Init(TextRows, GRow);
+	for(int i = 0; i < GRow; i++)
+	{
+		for(int j = 0; j < GColumn; j++)
+		{
+			UTextBlock* NewBlock = NewObject<UTextBlock>();
+			NewBlock->SetText(FText::FromString(FString(" ")));
+			GridBlocks[i][j] = NewBlock;
+			GBTree->AddChildToUniformGrid(GridBlocks[i][j], i, j);
+		}
+	}
+}
+
+void UMainMenuWidget::AddToTreeA()
+{
+	if(!ESetTree->GetText().ToString().IsNumeric())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Non digit value passed!"));
+		return;
+	}
+		
+	float Node = FCString::Atof(*ESetTree->GetText().ToString());
+	BTree->Add(Node);
+}
+
+void UMainMenuWidget::WalkTreeA()
+{
+	FString ElementString;
+	TreeElementsA = BTree->WalkTheTree();
+
+	if(TreeElementsA)
+	{
+		for(int i = 0; i < BTree->Num(); i++)
+		{
+			ElementString += FString::SanitizeFloat(TreeElementsA[i]);
+			
+			if(i != BTree->Num() -1)
+				ElementString += ", ";
+		}
+	}
+
+	TTreeElements->SetText(FText::FromString(ElementString));
+}
+
+void UMainMenuWidget::FindConnectionsA()
+{
+	FString Result;
+	
+	if(!EElementToFind->GetText().ToString().IsNumeric())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Non digit value passed!"));
+		return;
+	}
+
+	float Element = FCString::Atof(*EElementToFind->GetText().ToString());
+
+	FTreeNode* NodeElement = BTree->Find(Element, BTree->GetRoot());
+
+	if(NodeElement)
+	{
+		Result += "Parent: ";
+		if(NodeElement->Parent)
+		{
+			 Result += FString::SanitizeFloat(NodeElement->Parent->Value) + "\n";
+		}else
+		{
+			Result += "None\n";
+		}
+		
+		Result += "Left child: ";
+		if(NodeElement->LeftChild)
+		{
+			 Result += FString::SanitizeFloat(NodeElement->LeftChild->Value) + "\n";
+		}else
+		{
+			Result += "None\n";
+		}
+		
+		Result += "Right child: ";
+		if(NodeElement->RightChild)
+		{
+			 Result += FString::SanitizeFloat(NodeElement->RightChild->Value);
+		}else
+		{
+			Result += "None";
+		}
+	}
+
+	if(!Result.IsEmpty())
+	{
+		TConnections->SetText(FText::FromString(Result));
+	}
+}
+
+void UMainMenuWidget::FindIfExistsA()
+{
+	
+	if(!EElementToFind->GetText().ToString().IsNumeric())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Non digit value passed!"));
+		return;
+	}
+
+	float Element = FCString::Atof(*EElementToFind->GetText().ToString());
+
+	if(BTree->Exists(Element, BTree->GetRoot()))
+	{
+		TExists->SetText(FText::FromString(FString("Exists")));
+	}
+	else
+	{
+		TExists->SetText(FText::FromString(FString("Absent")));
+	}
+}
+
+void UMainMenuWidget::FindSecondEvenA()
+{
+	bool IsSecond(false);
+	
+	TreeElementsA = BTree->WalkTheTree();
+	if(TreeElementsA)
+	{
+		for(int i = BTree->Num() - 1; i >= 0; i--)
+		{
+			int Element = static_cast<int>(TreeElementsA[i]);
+			if (Element % 2 == 0 && IsSecond)
+			{
+				TEvenElement->SetText(FText::FromString(FString::SanitizeFloat(TreeElementsA[i])));
+				break;
+			}
+			if(Element % 2 == 0)
+				IsSecond = true;
+		}
+	}
+}
+
+void UMainMenuWidget::DisplayTree(FTreeNode& Element, int RowOffset, int ColumnOffset)
+{
+	if(!Element.Parent)
+	{
+		GridBlocks[RowOffset][GColumn / 2]->SetText(FText::FromString(FString::SanitizeFloat(Element.Value)));
+		Element.Offset = GColumn / 2;
+	}else if(ColumnOffset > 0)
+	{
+		GridBlocks[RowOffset][Element.Parent->Offset + GColumn / (2 + RowOffset)]->SetText(FText::FromString(FString::SanitizeFloat(Element.Value)));
+		Element.Offset = Element.Parent->Offset + GColumn / (2 + RowOffset);
+	}else
+	{
+		GridBlocks[RowOffset][Element.Parent->Offset - GColumn / (2 + RowOffset)]->SetText(FText::FromString(FString::SanitizeFloat(Element.Value)));
+		Element.Offset = Element.Parent->Offset - GColumn / (2 + RowOffset);
+	}
+}
+
+///
+/// Lab 9A
+///
+
+void UMainMenuWidget::Bind9A()
+{
+	if(!BGenerate->OnClicked.IsBound())
+	{
+		BGenerate->OnClicked.AddDynamic(this, &UMainMenuWidget::Generate);
+	}
+	if(!BChangeAndFind->OnClicked.IsBound())
+	{
+		BChangeAndFind->OnClicked.AddDynamic(this, &UMainMenuWidget::ChangeAndFind);
+	}
+	
+}
+
+void UMainMenuWidget::Generate()
+{
+	FString ArrayStr;
+	
+	int MinValue(0);
+	if(EMinElement->GetText().IsNumeric())
+	{
+		MinValue = FCString::Atoi(*EMinElement->GetText().ToString());
+	}
+
+	int ArraySize(0);
+	if(EArraySize->GetText().IsNumeric())
+	{
+		ArraySize = FCString::Atoi(*EArraySize->GetText().ToString());
+	}
+
+	if(Array9A.Num() != 0)
+		Array9A.Empty();
+	
+	for(int i = 0; i < ArraySize; i++)
+	{
+		Array9A.Add(MinValue);
+		if(MinValue < 0)
+			SumOfMinAbs += FMath::Abs(MinValue);
+		
+		ArrayStr += FString::FromInt(MinValue++);
+		if(i != ArraySize - 1)
+			ArrayStr += ", ";
+	}
+
+	TGeneratedArray->SetText(FText::FromString(ArrayStr));
+	IsChanged9A = false;
+}
+
+void UMainMenuWidget::ChangeAndFind()
+{
+	if(Array9A.Num() == 0)
+	{
+		return;
+	}
+	if(!EDesiredElement->GetText().IsNumeric())
+	{
+		return;
+	}
+
+	if(CChangeArray->IsChecked() && !IsChanged9A)
+	{
+		if(Array9A.Num() >= 3)
+		{
+			int Temp = Array9A[1];
+			Array9A[1] = Array9A[2];
+			Array9A[2] = Temp;
+		}
+
+		if(SumOfMinAbs != 0)
+			Array9A[Array9A.Num() - 1] /= SumOfMinAbs;
+		
+		FString ArrayStr;
+		for(int i = 0; i < Array9A.Num(); i++)
+		{		
+			ArrayStr += FString::FromInt(Array9A[i]);
+			if(i != Array9A.Num() - 1)
+				ArrayStr += ", ";
+		}
+
+		TGeneratedArray->SetText(FText::FromString(ArrayStr));
+		IsChanged9A = true;
+	}
+
+	Find9A();
+}
+
+void UMainMenuWidget::Find9A()
+{
+	bool IsFound = false;
+	int Desired = FCString::Atoi(*EDesiredElement->GetText().ToString());
+		
+	int Steps(0);
+	
+	int Left = 0;
+	int Right = Array9A.Num();
+	int Mid = Array9A.Num() / 2 - 1;
+	int PrevMid = Mid;
+	
+	if(Array9A[0] <= Desired && Array9A.Last() >= Desired)
+	{
+		if(Array9A[0] == Desired)
+		{
+			IsFound = true;
+		}
+		else if(Array9A.Last() == Desired)
+		{
+			IsFound = true;
+		}
+		else
+		{
+			for(;;Mid = (Right - Left) / 2 + Left)
+			{
+				Steps++;
+		
+				if(Array9A[Mid] == Desired)
+				{
+					IsFound = true;
+					break;
+				}
+
+				if(Array9A[Mid] > Desired)
+				{
+					PrevMid = Mid;
+					Right = Mid;
+					continue;
+				}
+
+				if(Array9A[Mid] < Desired)
+				{
+					PrevMid = Mid;
+					Left = Mid;
+					continue;
+				}
+
+				if(Mid == Left || Mid == Right || PrevMid == Mid)
+					break;
+		
+			}
+		}
+	}
+	if(IsFound)
+	{
+		TIsFound->SetText(FText::FromString(FString("True")));
+		TStepsCount->SetText(FText::FromString(FString::FromInt(Steps)));
+	}
+	else
+	{
+		TIsFound->SetText(FText::FromString(FString("False")));
+		TStepsCount->SetText(FText::FromString(FString("Nan")));
+	}
+}
+
+void UMainMenuWidget::Bind10_11A()
+{
+	if(!BFindAndDelete->OnClicked.IsBound())
+	{
+		BFindAndDelete->OnClicked.AddDynamic(this, &UMainMenuWidget::FindAndDelete);
+	}
+
+	FoundIndexA = -1;
+}
+
+void UMainMenuWidget::FindAndDelete()
+{
+	DeleteWord();
+	FindWord();
+}
+
+void UMainMenuWidget::FindWord()
+{
+	if(TSecondText->GetText().IsEmpty() || WordA.IsEmpty())
+	{
+		return;
+	}
+	std::chrono::time_point<std::chrono::steady_clock> StartTime, StopTime;
+	if(CBMethod->GetSelectedIndex() == 0)
+	{
+		StartTime = std::chrono::high_resolution_clock::now();
+		KMP_Method(TCHAR_TO_ANSI(*WordA), TCHAR_TO_ANSI(*TSecondText->GetText().ToString()), false);
+		StopTime = std::chrono::high_resolution_clock::now();
+	}
+	else if(CBMethod->GetSelectedIndex() == 1)
+	{
+		StartTime = std::chrono::high_resolution_clock::now();
+		BM_Method(TCHAR_TO_ANSI(*WordA), TCHAR_TO_ANSI(*TSecondText->GetText().ToString()), false);
+		StopTime = std::chrono::high_resolution_clock::now();
+	}
+	std::chrono::microseconds ExecutionTime = std::chrono::duration_cast<std::chrono::microseconds>(StopTime - StartTime);
+
+	UE_LOG(LogTemp, Warning, TEXT("Method took %lld microseconds"), ExecutionTime.count());
+	
+	TWord->SetText(FText::FromString(WordA));
+	if(FoundIndexA >= 0)
+	{
+		TFirstIndex->SetText(FText::FromString(FString::FromInt(FoundIndexA)));
+	}else
+	{
+		TFirstIndex->SetText(FText::FromString(FString("Nan")));
+	}
+}
+
+void UMainMenuWidget::DeleteWord()
+{
+	TMap<FString, int> Words;
+	
+	FString Text = TFirstText->GetText().ToString();
+	FString SavedText = Text;
+	Text = Text.ToLower();
+	char* Result = TCHAR_TO_ANSI(*Text);
+	char* NewWordPtr = nullptr;
+	char NewWord[40];
+	
+	int SizeOfNewWord = 0;
+
+	for(int i = 0; i < Text.Len(); i++)
+	{
+		if(std::isalpha(Result[i]))
+		{
+			if(SizeOfNewWord == 0)
+			{
+				NewWordPtr = Result + i;
+			}
+			SizeOfNewWord++;
+		}else if(!std::isalpha(Result[i]) &&  SizeOfNewWord != 0)
+		{
+			strncpy_s(NewWord, NewWordPtr, SizeOfNewWord);
+
+			FString Str(NewWord);
+
+			if(Words.Num() == 0)
+			{
+				Words.Add(Str, 1);
+			}
+			else
+			{
+				bool WordFound = false;
+				for(auto& Element : Words)
+				{
+					if(Element.Key == Str)
+					{
+						Element.Value++;
+						WordFound = true;
+					}
+				}
+				if(!WordFound)
+				{
+					Words.Add(Str, 1);
+				}
+			}
+			SizeOfNewWord = 0;
+		}
+	}
+
+	int MaxQuantity = 0;
+	if(Words.Num() != 0)
+	{
+		
+		for(auto& Element : Words)
+		{
+			if(Element.Value > MaxQuantity)
+			{
+				MaxQuantity = Element.Value;
+				WordA = Element.Key;
+			}
+		}
+	}
+	if(!WordA.IsEmpty())
+	{
+		if(CBMethod->GetSelectedIndex() == 0)
+			KMP_Method(TCHAR_TO_ANSI(*WordA), Result, true);
+		else if(CBMethod->GetSelectedIndex() == 1)
+			BM_Method(TCHAR_TO_ANSI(*WordA), Result, true);
+	}
+	
+	if(IndexesToDelete.Num() != 0)
+	{
+		for(int i = IndexesToDelete.Num() - 1; i >= 0; i--)
+		{
+			SavedText.RemoveAt(IndexesToDelete[i], WordA.Len());
+		}
+	}
+
+	TFirstText->SetText(FText::FromString(SavedText));
+}
+
+void UMainMenuWidget::KMP_Method(char* pat, char* txt, bool ToRemove)
+{
+	int M = strlen(pat);
+	int N = strlen(txt);
+ 
+	// create lps[] that will hold the longest prefix suffix
+	// values for pattern
+	int* lps = new int[M];
+ 
+	// Preprocess the pattern (calculate lps[] array)
+	FindLps(pat, M, lps);
+
+	FString LpsDebugString = TEXT("Lps = [");
+	for(int i = 0; i < M; i++)
+	{
+		LpsDebugString += FString::FromInt(lps[i]) + ", ";
+	}
+	LpsDebugString.RemoveFromEnd(FString(TEXT(", ")));
+	LpsDebugString += "]";
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *LpsDebugString);
+	
+	int i = 0; // index for txt[]
+	int j = 0; // index for pat[]
+	while ((N - i) >= (M - j)) {
+		if (pat[j] == txt[i]) {
+			j++;
+			i++;
+		}
+ 
+		if (j == M) {
+			if(!ToRemove)
+			{
+				FoundIndexA = i - j;
+				return;
+			}
+			IndexesToDelete.Add(i - j);
+			j = lps[j - 1];
+		}
+ 
+		// mismatch after j matches
+		else if (i < N && pat[j] != txt[i]) {
+			// Do not match lps[0..lps[j-1]] characters,
+			// they will match anyway
+			if (j != 0)
+				j = lps[j - 1];
+			else
+				i = i + 1;
+		}
+	}
+	
+	delete[] lps;
+}
+
+void UMainMenuWidget::FindLps(char* pat, int M, int* lps)
+{
+	// length of the previous longest prefix suffix
+	int len = 0;
+ 
+	lps[0] = 0; // lps[0] is always 0
+ 
+	// the loop calculates lps[i] for i = 1 to M-1
+	int i = 1;
+	while (i < M) {
+		if (pat[i] == pat[len]) {
+			len++;
+			lps[i] = len;
+			i++;
+		}
+		else // (pat[i] != pat[len])
+			{
+			// This is tricky. Consider the example.
+			// AAACAAAA and i = 7. The idea is similar
+			// to search step.
+			if (len != 0) {
+				len = lps[len - 1];
+ 
+				// Also, note that we do not increment
+				// i here
+			}
+			else // if (len == 0)
+				{
+				lps[i] = 0;
+				i++;
+				}
+			}
+	}
+}
+
+void UMainMenuWidget::BM_Method(char* pat, char* txt, bool ToRemove)
+{
+	int m = strlen(pat); 
+	int n = strlen(txt); 
+ 
+	int* badchar = new int[256]; 
+ 
+	/* Fill the bad character array by calling 
+	the preprocessing function badCharHeuristic() 
+	for given pattern */
+	BadCharHeu(pat, m, badchar, 256); 
+	
+	FString DebugBadChar;
+	for (int i = 0; i < 256; i++)
+	{
+		if(badchar[i] != -1){
+			DebugBadChar += FString::FromInt(badchar[i]) + ", ";
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugBadChar);
+ 
+	int s = 0; // s is shift of the pattern with 
+	// respect to text 
+	while(s <= (n - m)) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("s = %i"), s);
+
+		int j = m - 1;
+		
+		FString DebugTextClip;
+		for (int i = s; i <= s+m; ++i)
+		{
+			DebugTextClip += txt[i];
+		}
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugTextClip);
+		UE_LOG(LogTemp, Warning, TEXT("%hs"), pat);
+		
+		/* Keep reducing index j of pattern while 
+		characters of pattern and text are 
+		matching at this shift s */
+		while(j >= 0 && pat[j] == txt[s + j]) 
+			j--;
+		
+		UE_LOG(LogTemp, Warning, TEXT("j after reducing = %i"), j);
+		
+		/* If the pattern is present at current 
+		shift, then index j will become -1 after 
+		the above loop */
+		if (j < 0) 
+		{ 
+			//cout << "pattern occurs at shift = " <<  s << endl;
+			
+			if(!ToRemove)
+			{
+				FoundIndexA = s;
+				return;
+			}
+			IndexesToDelete.Add(s);
+			
+			/* Shift the pattern so that the next 
+			character in text aligns with the last 
+			occurrence of it in pattern. 
+			The condition s+m < n is necessary for 
+			the case when pattern occurs at the end 
+			of text */
+			s += (s + m < n)? m-badchar[txt[s + m]] : 1; 
+ 
+		} 
+ 
+		else
+			/* Shift the pattern so that the bad character 
+			in text aligns with the last occurrence of 
+			it in pattern. The max function is used to 
+			make sure that we get a positive shift. 
+			We may get a negative shift if the last 
+			occurrence of bad character in pattern 
+			is on the right side of the current 
+			character. */
+			s += std::max(1, j - badchar[txt[s + j]]); 
+	}
+}
+
+void UMainMenuWidget::BadCharHeu(char* str, int size, int* badchar, int numOfBad)
+{ 
+	int i; 
+ 
+	// Initialize all occurrences as -1 
+	for (i = 0; i < numOfBad; i++) 
+		badchar[i] = -1; 
+ 
+	// Fill the actual value of last occurrence 
+	// of a character 
+	for (i = 0; i < size; i++) 
+		badchar[(int) str[i]] = i;
 }
